@@ -17,9 +17,8 @@ public class Scan extends NetworkActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_scan);
 
-        debug = PreferenceManager.getDefaultSharedPreferences(getBaseContext()).getBoolean("saved_debug_status", false);
+        this.debug = PreferenceManager.getDefaultSharedPreferences(getBaseContext()).getBoolean("saved_debug_status", false);
 
         IntentIntegrator integrator = new IntentIntegrator(this);
         integrator.setDesiredBarcodeFormats(IntentIntegrator.QR_CODE_TYPES);
@@ -38,9 +37,11 @@ public class Scan extends NetworkActivity {
         if(result != null){
             if(result.getContents()==null){
                 Toast.makeText(this, "Ticketscan abgebrochen!", Toast.LENGTH_LONG).show();
+                Intent change = new Intent(getBaseContext(), MainMenue.class);
+                startActivity(change);
             }
             else {
-                if ( debug )
+                if ( this.debug )
                     Toast.makeText(this, result.getContents(), Toast.LENGTH_LONG).show();
 
                 String scanres = result.getContents();
@@ -53,7 +54,7 @@ public class Scan extends NetworkActivity {
                 }
                 //TODO: remove this:
                 //new Net(urls, key, scanres, 5000, this).execute();
-                //TODO: edit scanres (add info)
+                //TODO: edit scanres (add info); target=ShowUserContent
                 new Network(urls, key, "POST", scanres, 5000, this, this);
             }
         }
@@ -62,8 +63,9 @@ public class Scan extends NetworkActivity {
         }
     }
 
+    //TODO: move to ShowUserContent
     public void showResult(String res) {
-        if ( debug )
+        if ( this.debug )
             Toast.makeText(this, res, Toast.LENGTH_LONG).show();
         Intent change = new Intent(getBaseContext(), ShowUserContent.class);
         Bundle b = new Bundle();

@@ -19,7 +19,7 @@ public class Start extends AppCompatActivity {
         String key = PreferenceManager.getDefaultSharedPreferences(getBaseContext()).getString("saved_api_key", "default");
         System.out.println("keyvalue: " + key);
         if ( !key.equals("default")  ) {
-            Intent change = new Intent(getBaseContext(), Scan.class);
+            Intent change = new Intent(getBaseContext(), MainMenue.class);
             startActivity(change);
         }
 
@@ -34,7 +34,7 @@ public class Start extends AppCompatActivity {
                 PreferenceManager.getDefaultSharedPreferences(getBaseContext()).edit().putBoolean("saved_debug_status", debug.isChecked()).commit();
                 PreferenceManager.getDefaultSharedPreferences(getBaseContext()).edit().putString("saved_api_key", keyeingabe.getText().toString()).commit();
                 PreferenceManager.getDefaultSharedPreferences(getBaseContext()).edit().putString("saved_server_ip", server_ip.getText().toString()).commit();
-                Intent change = new Intent(getBaseContext(), Scan.class);
+                Intent change = new Intent(getBaseContext(), MainMenue.class);
                 startActivity(change);
             }
         });

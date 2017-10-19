@@ -1,6 +1,7 @@
 package ch.ethz.geco.gecocheckin;
 
 import android.os.AsyncTask;
+import android.support.v7.app.AppCompatActivity;
 import android.widget.Toast;
 
 
@@ -26,7 +27,7 @@ public class Network extends AsyncTask<String, String, String> {
     private String requestType;
     private Loading loading;
     private String content;
-    private NetworkActivity origin;
+    private AppCompatActivity origin;
     private NetworkActivity target;
 
     /**
@@ -38,7 +39,7 @@ public class Network extends AsyncTask<String, String, String> {
      * @param origin Calling class
      * @param target Class to open when done with result
      */
-    Network(String serverurl, String apikey, String requestType, String content, int timeout, NetworkActivity origin, NetworkActivity target) {
+    Network(String serverurl, String apikey, String requestType, String content, int timeout, AppCompatActivity origin, NetworkActivity target) {
         this.serverurl = serverurl;
         this.apikey = apikey;
         this.timeout = timeout;

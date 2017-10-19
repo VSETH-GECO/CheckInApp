@@ -20,7 +20,8 @@
             </intent-filter>
         </activity>
         <activity android:name=".Scan" />
-        <activity android:name=".ShowUserContent"></activity>
+        <activity android:name=".ShowUserContent" />
+        <activity android:name=".MainMenue"></activity>
     </application>
 
 </manifest>

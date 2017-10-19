@@ -1,4 +1,4 @@
-package ch.ethz.geco.gecocheckin;
+/*package ch.ethz.geco.gecocheckin;
 
 import android.os.AsyncTask;
 import android.widget.Toast;
@@ -121,4 +121,4 @@ public class NetCheckIn extends AsyncTask<String, String, String> {
         }
         super.onPostExecute(a);
     }
-}
+}*/

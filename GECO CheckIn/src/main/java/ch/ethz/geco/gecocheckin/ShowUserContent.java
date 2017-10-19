@@ -25,6 +25,10 @@ public class ShowUserContent extends AppCompatActivity {
     private ProgressDialog dialog;
     private boolean error;
 
+    /**
+     * Create view
+     * @param savedInstanceState
+     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -42,10 +46,12 @@ public class ShowUserContent extends AppCompatActivity {
 
         String status = "ERROR";
 
+        //Generate Text from request to display
         try {
             JsonParser parser = new JsonParser();
             JsonObject jo = (JsonObject) parser.parse(ticketdata);
 
+            //Check if user is over 18
             long unixbirthday = jo.get("birthday").getAsLong()*1000;
             Date birthday = new Date(unixbirthday);
             Calendar calendar = GregorianCalendar.getInstance();
@@ -65,6 +71,7 @@ public class ShowUserContent extends AppCompatActivity {
 
             status = jo.get("status").getAsString();
 
+            //Confirm age if User ist under 18
             if ( !over18 ) {
                 confirmAge();
             }
@@ -75,39 +82,32 @@ public class ShowUserContent extends AppCompatActivity {
 
 
         if ( status.contains("ERROR") ) {
-            error = true;
+            this.error = true;
         } else {
-            error = false;
+            this.error = false;
         }
     }
 
+    /**
+     * Confirm the checkin
+     * @param view
+     */
     public void checkIn(View view) {
         if ( !error ) {
             String key = PreferenceManager.getDefaultSharedPreferences(getBaseContext()).getString("saved_api_key", "error");
             String urls = PreferenceManager.getDefaultSharedPreferences(getBaseContext()).getString("saved_server_ip", "error");
-            new NetCheckIn(this, urls, key, this.scanres, 5000).execute();
+            //TODO: Remove this
+            //new NetCheckIn(this, urls, key, this.scanres, 5000).execute();
+            //TODO: Change Scan to Main Menue
+            new Network(urls, key, "POST", this.scanres, 5000, this, new MainMenue());
         } else {
             Toast.makeText(this, "User kann nicht eingeckecked werden. Siehe Status.", Toast.LENGTH_LONG).show();
         }
     }
 
-    public void done() {
-        dialog.hide();
-        Intent change = new Intent(getBaseContext(), Scan.class);
-        startActivity(change);
-    }
-
-
-    public void showLoading(){
-        dialog = new ProgressDialog(ShowUserContent.this);
-        dialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
-        dialog.setMessage("Lade Daten...");
-        dialog.setIndeterminate(true);
-        dialog.setCanceledOnTouchOutside(false);
-        dialog.show();
-    }
-
-
+    /**
+     * Dialog Box to confirm, that the user has permission
+     */
     public void confirmAge(){
         new AlertDialog.Builder(ShowUserContent.this)
                 .setTitle("Altersprüfung")

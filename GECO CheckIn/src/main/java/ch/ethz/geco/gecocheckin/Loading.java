@@ -14,7 +14,7 @@ public class Loading {
     private ProgressDialog dialog;
 
     /**
-     *
+     * Initialize vars
      * @param dialogTarget
      * @param afterLoadingTarget
      */
@@ -23,8 +23,11 @@ public class Loading {
         this.afterLoadingTarget = afterLoadingTarget;
     }
 
+    /**
+     * Show the Loading dialog
+     */
     public void show(){
-        dialog = new ProgressDialog(this.dialogTarget); // this = YourActivity
+        dialog = new ProgressDialog(this.dialogTarget);
         dialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
         dialog.setMessage("Lade Daten...");
         dialog.setIndeterminate(true);
@@ -32,7 +35,11 @@ public class Loading {
         dialog.show();
     }
 
+    /**
+     * Hide dialog and change Activity
+     */
     public void done(){
         dialog.hide();
+        //TODO: Change to target
     }
 }
