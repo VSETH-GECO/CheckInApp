@@ -2,7 +2,7 @@
     <string name="app_name">GECO Check In</string>
     <string name="saved_api_key">default</string>
     <string name="saved_server_ip">default</string>
-    <string name="version">Version 1.0 by felunka</string>
+    <string name="version">Version 1.3 by felunka</string>
 
 
 </resources>

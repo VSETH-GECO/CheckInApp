@@ -12,17 +12,26 @@ public class MainMenue extends NetworkActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main_menue);
 
-        final Button button = (Button) findViewById(R.id.btn_scan);
-        button.setOnClickListener(new View.OnClickListener() { public void onClick(View v) { scan(); } } );
-        //TODO: Action listener for 3 more buttons
+        final Button btn_scan = (Button) findViewById(R.id.btn_scan);
+        final Button btn_rent = (Button) findViewById(R.id.btn_rent);
+        btn_scan.setOnClickListener(new View.OnClickListener() { public void onClick(View v) { scan(); } } );
+        btn_rent.setOnClickListener(new View.OnClickListener() { public void onClick(View v) { rent(); } } );
+        //TODO: Action listener for 2 more buttons
     }
 
     /**
      * Open Scan view
      */
     private void scan(){
-        //TODO: implement
         Intent change = new Intent(getBaseContext(), Scan.class);
+        Bundle b = new Bundle();
+        b.putString("caller", ShowUserContent.class.getCanonicalName());
+        change.putExtras(b);
+        startActivity(change);
+    }
+
+    private void rent(){
+        Intent change = new Intent(getBaseContext(), Rent.class);
         startActivity(change);
     }
 

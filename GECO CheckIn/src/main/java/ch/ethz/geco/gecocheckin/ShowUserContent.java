@@ -1,12 +1,10 @@
 package ch.ethz.geco.gecocheckin;
 
-import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.v7.app.AlertDialog;
-import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -19,11 +17,11 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
 
-public class ShowUserContent extends AppCompatActivity {
+public class ShowUserContent extends NetworkActivity {
 
     private String scanres;
-    private ProgressDialog dialog;
     private boolean error;
+    private String ticketdata;
 
     /**
      * Create view
@@ -34,15 +32,31 @@ public class ShowUserContent extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_show_user_content);
 
-        TextView data = (TextView) findViewById(R.id.contentView);
+        this.ticketdata = "";
 
+        //get result of qr code
         Bundle b = getIntent().getExtras();
-        String ticketdata = "";
         this.scanres = "";
         if(b != null) {
-            ticketdata = b.getString("ticketdata");
             this.scanres = b.getString("scan");
         }
+        //read API setting and validate
+        String key = PreferenceManager.getDefaultSharedPreferences(getBaseContext()).getString("saved_api_key", "error");
+        String urls = PreferenceManager.getDefaultSharedPreferences(getBaseContext()).getString("saved_server_ip", "error");
+
+        if ( key.contains("error") || urls.contains("error") ) {
+            Toast.makeText(this, "Fehler! Bitte App resetten!", Toast.LENGTH_LONG).show();
+        }
+        //validate Ticket and get Userdata
+        //TODO: add query parm to scanres
+        new Network(urls, key, "POST", this.scanres, 5000, this, this).execute();
+    }
+
+    /**
+     * Present Userdata and calculate userage
+     */
+    private void showCont(){
+        TextView data = (TextView) findViewById(R.id.contentView);
 
         String status = "ERROR";
 
@@ -92,14 +106,12 @@ public class ShowUserContent extends AppCompatActivity {
      * Confirm the checkin
      * @param view
      */
-    public void checkIn(View view) {
+    private void checkIn(View view) {
         if ( !error ) {
             String key = PreferenceManager.getDefaultSharedPreferences(getBaseContext()).getString("saved_api_key", "error");
             String urls = PreferenceManager.getDefaultSharedPreferences(getBaseContext()).getString("saved_server_ip", "error");
-            //TODO: Remove this
-            //new NetCheckIn(this, urls, key, this.scanres, 5000).execute();
-            //TODO: Change Scan to Main Menue
-            new Network(urls, key, "POST", this.scanres, 5000, this, new MainMenue());
+            //TODO: add checkin to scanres
+            new Network(urls, key, "POST", this.scanres, 5000, this, new MainMenue()).execute();
         } else {
             Toast.makeText(this, "User kann nicht eingeckecked werden. Siehe Status.", Toast.LENGTH_LONG).show();
         }
@@ -108,7 +120,7 @@ public class ShowUserContent extends AppCompatActivity {
     /**
      * Dialog Box to confirm, that the user has permission
      */
-    public void confirmAge(){
+    private void confirmAge(){
         new AlertDialog.Builder(ShowUserContent.this)
                 .setTitle("Altersprüfung")
                 .setMessage("User ist nicht über 18! Ist eine Erlaubnis der Eltern vorhanden?")
@@ -131,5 +143,11 @@ public class ShowUserContent extends AppCompatActivity {
 
     //TODO: confirmFachverein() missing
 
-
+    public void showResult(String res) {
+        if(this.ticketdata.equals("")) {
+            this.ticketdata = res;
+        } else {
+            //TODO: If positiv: User has been checked in; move to main menue
+        }
+    }
 }
