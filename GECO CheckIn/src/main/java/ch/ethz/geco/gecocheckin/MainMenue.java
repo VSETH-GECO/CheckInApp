@@ -13,8 +13,10 @@ public class MainMenue extends NetworkActivity {
         setContentView(R.layout.activity_main_menue);
 
         final Button btn_scan = (Button) findViewById(R.id.btn_scan);
+        final Button btn_finduser = (Button) findViewById(R.id.btn_findUser);
         final Button btn_rent = (Button) findViewById(R.id.btn_rent);
         btn_scan.setOnClickListener(new View.OnClickListener() { public void onClick(View v) { scan(); } } );
+        btn_finduser.setOnClickListener(new View.OnClickListener() { public void onClick(View v) { finduser(); } } );
         btn_rent.setOnClickListener(new View.OnClickListener() { public void onClick(View v) { rent(); } } );
         //TODO: Action listener for 2 more buttons
     }
@@ -30,6 +32,17 @@ public class MainMenue extends NetworkActivity {
         startActivity(change);
     }
 
+    /**
+     * Open FindUser view
+     */
+    private void finduser(){
+        Intent change = new Intent(getBaseContext(), FindUser.class);
+        startActivity(change);
+    }
+
+    /**
+     * Open Rent view
+     */
     private void rent(){
         Intent change = new Intent(getBaseContext(), Rent.class);
         startActivity(change);

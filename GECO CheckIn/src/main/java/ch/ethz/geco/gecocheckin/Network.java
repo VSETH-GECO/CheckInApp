@@ -1,5 +1,6 @@
 package ch.ethz.geco.gecocheckin;
 
+import android.content.Intent;
 import android.os.AsyncTask;
 import android.support.v7.app.AppCompatActivity;
 import android.widget.Toast;
@@ -133,13 +134,9 @@ public class Network extends AsyncTask<String, String, String> {
     @Override
     protected void onPostExecute(String a){
         //System.out.println(a);
-        //TODO: switch to target
-        if ( !a.contains("Fehler") ) {
-            this.target.showResult(a);
-        } else {
-            Toast.makeText(this.target, a, Toast.LENGTH_LONG).show();
-            this.loading.done();
-        }
+        this.loading.done();
+        this.target.showResult(a);
 
+        //TODO: switch to target?
     }
 }

@@ -12,11 +12,14 @@ import com.google.zxing.integration.android.IntentResult;
 
 public class Scan extends AppCompatActivity {
 
-    private String qrticketscan;
     private ProgressDialog dialog;
     private boolean debug;
     private String caller;
 
+    /**
+     * Setup scanner
+     * @param savedInstanceState
+     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -40,6 +43,12 @@ public class Scan extends AppCompatActivity {
 
     }
 
+    /**
+     * Works with resuklt when scan is finished
+     * @param requestCode
+     * @param resultCode
+     * @param data
+     */
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         IntentResult result = IntentIntegrator.parseActivityResult(requestCode, resultCode, data);

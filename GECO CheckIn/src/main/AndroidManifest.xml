@@ -22,7 +22,8 @@
         <activity android:name=".Scan" />
         <activity android:name=".ShowUserContent" />
         <activity android:name=".MainMenue" />
-        <activity android:name=".Rent"></activity>
+        <activity android:name=".Rent" />
+        <activity android:name=".FindUser"></activity>
     </application>
 
 </manifest>
