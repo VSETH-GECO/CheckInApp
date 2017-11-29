@@ -136,6 +136,7 @@ public class Network extends AsyncTask<String, String, String> {
     protected void onPostExecute(String a){
         //System.out.println(a);
 <<<<<<< HEAD
+<<<<<<< HEAD
         //TODO: switch to target
         if ( !a.contains("Fehler") ) {
             this.target.showResult(a);
@@ -144,6 +145,10 @@ public class Network extends AsyncTask<String, String, String> {
             Toast.makeText(this.target, a, Toast.LENGTH_LONG).show();
             this.loading.done();
         }
+=======
+        this.loading.done();
+        this.target.showResult(a);
+>>>>>>> d8b92d595df7bb29a72dec1f20d2898613a4c238
 =======
         this.loading.done();
         this.target.showResult(a);
