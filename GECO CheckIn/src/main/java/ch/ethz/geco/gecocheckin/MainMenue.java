@@ -13,10 +13,15 @@ public class MainMenue extends NetworkActivity {
         setContentView(R.layout.activity_main_menue);
 
         final Button btn_scan = (Button) findViewById(R.id.btn_scan);
+        final Button btn_finduser = (Button) findViewById(R.id.btn_findUser);
         final Button btn_rent = (Button) findViewById(R.id.btn_rent);
+        final Button btn_findSeat = (Button) findViewById(R.id.btn_findSeat);
+        final Button btn_findUser = (Button) findViewById(R.id.btn_findUser);
         btn_scan.setOnClickListener(new View.OnClickListener() { public void onClick(View v) { scan(); } } );
+        btn_finduser.setOnClickListener(new View.OnClickListener() { public void onClick(View v) { finduser(); } } );
         btn_rent.setOnClickListener(new View.OnClickListener() { public void onClick(View v) { rent(); } } );
-        //TODO: Action listener for 2 more buttons
+        btn_findSeat.setOnClickListener(new View.OnClickListener() { public void onClick(View v) { findSeat(); } } );
+        btn_findUser.setOnClickListener(new View.OnClickListener() { public void onClick(View v) { findUser(); } } );
     }
 
     /**
@@ -30,8 +35,29 @@ public class MainMenue extends NetworkActivity {
         startActivity(change);
     }
 
+    /**
+     * Open FindUser view
+     */
+    private void finduser(){
+        Intent change = new Intent(getBaseContext(), FindUser.class);
+        startActivity(change);
+    }
+
+    /**
+     * Open Rent view
+     */
     private void rent(){
         Intent change = new Intent(getBaseContext(), Rent.class);
+        startActivity(change);
+    }
+
+    public void findSeat(){
+        Intent change = new Intent(getBaseContext(), SearchSeat.class);
+        startActivity(change);
+    }
+
+    public void findUser(){
+        Intent change = new Intent(getBaseContext(), SearchUser.class);
         startActivity(change);
     }
 

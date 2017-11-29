@@ -33,7 +33,7 @@
         tools:layout_constraintLeft_creator="1" />
 
     <Button
-        android:id="@+id/findUser"
+        android:id="@+id/btn_findUser"
         style="@style/Widget.AppCompat.Button.Borderless"
         android:layout_width="180dp"
         android:layout_height="100dp"
@@ -58,7 +58,7 @@
         android:textSize="18sp"
         android:visibility="visible"
         app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toLeftOf="@+id/findUser"
+        app:layout_constraintRight_toLeftOf="@+id/btn_findUser"
         app:layout_constraintBottom_toTopOf="@+id/btn_findSeat"
         app:layout_constraintTop_toBottomOf="@+id/logo" />
 
@@ -90,6 +90,6 @@
         app:layout_constraintLeft_toRightOf="@+id/btn_findSeat"
         app:layout_constraintRight_toRightOf="parent"
         app:layout_constraintBottom_toTopOf="@+id/vers"
-        app:layout_constraintTop_toBottomOf="@+id/findUser" />
+        app:layout_constraintTop_toBottomOf="@+id/btn_findUser" />
 
 </android.support.constraint.ConstraintLayout>

@@ -12,6 +12,9 @@ import android.widget.Toast;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
@@ -22,6 +25,7 @@ public class ShowUserContent extends NetworkActivity {
     private String scanres;
     private boolean error;
     private String ticketdata;
+    private int userId;
 
     /**
      * Create view
@@ -33,6 +37,7 @@ public class ShowUserContent extends NetworkActivity {
         setContentView(R.layout.activity_show_user_content);
 
         this.ticketdata = "";
+        this.userId = -1;
 
         //get result of qr code
         Bundle b = getIntent().getExtras();
@@ -40,6 +45,14 @@ public class ShowUserContent extends NetworkActivity {
         if(b != null) {
             this.scanres = b.getString("scan");
         }
+        try {
+            JSONObject s = new JSONObject(this.scanres);
+            this.userId = s.getInt("id");
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+
         //read API setting and validate
         String key = PreferenceManager.getDefaultSharedPreferences(getBaseContext()).getString("saved_api_key", "error");
         String urls = PreferenceManager.getDefaultSharedPreferences(getBaseContext()).getString("saved_server_ip", "error");
@@ -49,7 +62,7 @@ public class ShowUserContent extends NetworkActivity {
         }
         //validate Ticket and get Userdata
         //TODO: add query parm to scanres
-        new Network(urls, key, "POST", this.scanres, 5000, this, this).execute();
+        new Network(urls+"/lan/user/"+this.userId, key, "GET", "", 5000, this, this).execute();
     }
 
     /**
@@ -78,10 +91,7 @@ public class ShowUserContent extends NetworkActivity {
             data.append("\nName: " + jo.get("fist_name").getAsString() + " " + jo.get("last_name").getAsString());
             data.append("\nGeburtstag: " + new SimpleDateFormat("dd.MM.yyyy").format(birthday) + " (über 18: " + (over18 ? "Ja" : "Nein") + ")");
 
-            data.append("\nSitzplatz: " + jo.get("seat").getAsString());
-            data.append("\n\nEssen Freitag: " + (jo.get("dinner_friday").getAsBoolean() ? "Ja" : "Nein"));
-            data.append("\nEssen Samstag: " + (jo.get("dinner_saturday").getAsBoolean() ? "Ja" : "Nein"));
-            data.append("\nEssen Sonntag: " + (jo.get("dinner_sunday").getAsBoolean() ? "Ja" : "Nein"));
+            //data.append("\nSitzplatz: " + jo.get("seat").getAsString());
 
             status = jo.get("status").getAsString();
 
@@ -91,6 +101,7 @@ public class ShowUserContent extends NetworkActivity {
             }
         }
         catch (Exception e) {
+            e.printStackTrace();
             data.setText("Fehler beim darstellen der Daten. Bitte versuche es erneut!");
         }
 
@@ -146,6 +157,7 @@ public class ShowUserContent extends NetworkActivity {
     public void showResult(String res) {
         if(this.ticketdata.equals("")) {
             this.ticketdata = res;
+            this.showCont();
         } else {
             //TODO: If positiv: User has been checked in; move to main menue
         }

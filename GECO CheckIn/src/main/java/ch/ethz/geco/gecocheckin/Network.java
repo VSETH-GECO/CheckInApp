@@ -1,5 +1,6 @@
 package ch.ethz.geco.gecocheckin;
 
+import android.content.Intent;
 import android.os.AsyncTask;
 import android.support.v7.app.AppCompatActivity;
 import android.widget.Toast;
@@ -76,9 +77,9 @@ public class Network extends AsyncTask<String, String, String> {
             c.setAllowUserInteraction(false);
             c.setConnectTimeout(timeout);
             c.setReadTimeout(timeout);
-            //API Key for Authorisation
-            c.setRequestProperty("Authorization", "Token token="+this.apikey);
             c.setRequestProperty("Content-Type","application/json");
+            //API Key for Authorisation
+            c.addRequestProperty("X-API-KEY", this.apikey);
 
             c.connect();
 
@@ -92,7 +93,7 @@ public class Network extends AsyncTask<String, String, String> {
 
             //Get HTTP response Code
             int status = c.getResponseCode();
-            //System.out.println("HTTP Status: " + status);
+            System.out.println("HTTP Status: " + status);
 
             //Read result if response 200
             switch (status) {
@@ -122,8 +123,9 @@ public class Network extends AsyncTask<String, String, String> {
                 }
             }
         }
+
         //Return error Message
-        return "Fehler! Verbindung konnte nicht hergestellt werden! Bitte prüfe deine Internetverbindung, Serveradresse und API Key";
+        return "Fehler! Verbindung konnte nicht hergestellt werden! Bitte prüfe deine Internetverbindung, Serveradresse und API Key.";
     }
 
     /**
@@ -133,13 +135,20 @@ public class Network extends AsyncTask<String, String, String> {
     @Override
     protected void onPostExecute(String a){
         //System.out.println(a);
+<<<<<<< HEAD
         //TODO: switch to target
         if ( !a.contains("Fehler") ) {
             this.target.showResult(a);
+            this.loading.done();
         } else {
             Toast.makeText(this.target, a, Toast.LENGTH_LONG).show();
             this.loading.done();
         }
+=======
+        this.loading.done();
+        this.target.showResult(a);
+>>>>>>> d8b92d595df7bb29a72dec1f20d2898613a4c238
 
+        //TODO: switch to target?
     }
 }
