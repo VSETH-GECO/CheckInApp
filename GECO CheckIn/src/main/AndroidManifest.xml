@@ -23,16 +23,10 @@
         <activity android:name=".ShowUserContent" />
         <activity android:name=".MainMenue" />
         <activity android:name=".Rent" />
-<<<<<<< HEAD
-<<<<<<< HEAD
         <activity android:name=".SearchUser" />
         <activity android:name=".SearchSeat"></activity>
-=======
         <activity android:name=".FindUser"></activity>
->>>>>>> d8b92d595df7bb29a72dec1f20d2898613a4c238
-=======
-        <activity android:name=".FindUser"></activity>
->>>>>>> d8b92d595df7bb29a72dec1f20d2898613a4c238
+
     </application>
 
 </manifest>

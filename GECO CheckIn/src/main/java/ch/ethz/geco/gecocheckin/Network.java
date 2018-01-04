@@ -2,6 +2,7 @@ package ch.ethz.geco.gecocheckin;
 
 import android.content.Intent;
 import android.os.AsyncTask;
+import android.preference.PreferenceManager;
 import android.support.v7.app.AppCompatActivity;
 import android.widget.Toast;
 
@@ -33,22 +34,24 @@ public class Network extends AsyncTask<String, String, String> {
 
     /**
      * Initilize all vars
-     * @param serverurl URL of the API Server
-     * @param apikey API Key for Authentication
      * @param requestType POST or GET
      * @param content POST content for request
      * @param origin Calling class
      * @param target Class to open when done with result
      */
-    Network(String serverurl, String apikey, String requestType, String content, int timeout, AppCompatActivity origin, NetworkActivity target) {
-        this.serverurl = serverurl;
-        this.apikey = apikey;
+    Network(String urlex, String requestType, String content, int timeout, AppCompatActivity origin, NetworkActivity target) {
         this.timeout = timeout;
         this.requestType = requestType;
         this.content = content;
         this.origin = origin;
         this.target = target;
         this.loading = new Loading(this.origin, this.target);
+        this.apikey = PreferenceManager.getDefaultSharedPreferences(origin.getBaseContext()).getString("saved_api_key", "error");
+        this.serverurl = PreferenceManager.getDefaultSharedPreferences(origin.getBaseContext()).getString("saved_server_ip", "error");
+        this.serverurl += urlex;
+        if (this.apikey.contains("error") || this.serverurl.contains("error")) {
+            Toast.makeText(origin, "Fehler! Bitte App resetten!", Toast.LENGTH_LONG).show();
+        }
     }
 
     /**
@@ -135,8 +138,6 @@ public class Network extends AsyncTask<String, String, String> {
     @Override
     protected void onPostExecute(String a){
         //System.out.println(a);
-<<<<<<< HEAD
-<<<<<<< HEAD
         //TODO: switch to target
         if ( !a.contains("Fehler") ) {
             this.target.showResult(a);
@@ -145,14 +146,6 @@ public class Network extends AsyncTask<String, String, String> {
             Toast.makeText(this.target, a, Toast.LENGTH_LONG).show();
             this.loading.done();
         }
-=======
-        this.loading.done();
-        this.target.showResult(a);
->>>>>>> d8b92d595df7bb29a72dec1f20d2898613a4c238
-=======
-        this.loading.done();
-        this.target.showResult(a);
->>>>>>> d8b92d595df7bb29a72dec1f20d2898613a4c238
 
         //TODO: switch to target?
     }
