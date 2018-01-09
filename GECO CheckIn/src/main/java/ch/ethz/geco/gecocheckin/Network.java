@@ -87,7 +87,7 @@ public class Network extends AsyncTask<String, String, String> {
             c.connect();
 
             //Content only for POST
-            if (this.requestType.equals("POST")) {
+            if (this.requestType.equals("PATCH")) {
                 String str =  this.content;
                 byte[] outputInBytes = str.getBytes("UTF-8");
                 OutputStream os = c.getOutputStream();

@@ -175,7 +175,7 @@ public class ShowUserContent extends NetworkActivity {
         JsonObject post = new JsonObject();
         post.addProperty("sa_verified", true);
         post.addProperty("legi_number", id);
-        new Network("/lan/user/" + this.userId + "/verify", "POST", post.toString(), 5000, this, this).execute();
+        new Network("/lan/user/" + this.userId + "/verify", "PATCH", post.toString(), 5000, this, this).execute();
     }
 
     /**
