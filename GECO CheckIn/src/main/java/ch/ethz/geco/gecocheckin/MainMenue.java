@@ -2,6 +2,7 @@ package ch.ethz.geco.gecocheckin;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.Button;
@@ -17,12 +18,12 @@ public class MainMenue extends AppCompatActivity {
         final Button btn_finduser = (Button) findViewById(R.id.btn_findUser);
         final Button btn_rent = (Button) findViewById(R.id.btn_rent);
         final Button btn_findSeat = (Button) findViewById(R.id.btn_findSeat);
-        final Button btn_findUser = (Button) findViewById(R.id.btn_findUser);
+        final Button btn_reset = (Button) findViewById(R.id.btn_reset);
         btn_scan.setOnClickListener(new View.OnClickListener() { public void onClick(View v) { scan(); } } );
         btn_finduser.setOnClickListener(new View.OnClickListener() { public void onClick(View v) { finduser(); } } );
         btn_rent.setOnClickListener(new View.OnClickListener() { public void onClick(View v) { rent(); } } );
         btn_findSeat.setOnClickListener(new View.OnClickListener() { public void onClick(View v) { findSeat(); } } );
-        btn_findUser.setOnClickListener(new View.OnClickListener() { public void onClick(View v) { findUser(); } } );
+        btn_reset.setOnClickListener(new View.OnClickListener() { public void onClick(View v) { reset(); } } );
     }
 
     /**
@@ -52,14 +53,20 @@ public class MainMenue extends AppCompatActivity {
         startActivity(change);
     }
 
-    public void findSeat(){
+    private void findSeat(){
         Intent change = new Intent(getBaseContext(), SearchSeat.class);
         startActivity(change);
     }
 
-    public void findUser(){
-        Intent change = new Intent(getBaseContext(), SearchUser.class);
+    /**
+     * Reset App values
+     */
+    private void reset(){
+        PreferenceManager.getDefaultSharedPreferences(getBaseContext()).edit().putString("saved_api_key", "default").commit();
+        PreferenceManager.getDefaultSharedPreferences(getBaseContext()).edit().putString("saved_server_ip", "default").commit();
+        Intent change = new Intent(getBaseContext(), Start.class);
         startActivity(change);
     }
+
 
 }

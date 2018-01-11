@@ -4,6 +4,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AlertDialog;
 import android.text.InputType;
 import android.view.View;
@@ -38,7 +39,7 @@ public class ShowUserContent extends NetworkActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_show_user_content);
 
-        final Button checkin_btn = (Button) findViewById(R.id.checkin_btn);
+        final FloatingActionButton checkin_btn = (FloatingActionButton) findViewById(R.id.checkin_btn);
         checkin_btn.setOnClickListener(new View.OnClickListener() { public void onClick(View v) { checkIn(); } } );
 
         this.status = 0;
@@ -229,7 +230,7 @@ public class ShowUserContent extends NetworkActivity {
     public void showResult(String res) {
         JsonParser parser = new JsonParser();
         this.ticketdata = (JsonObject) parser.parse(res);
-        if (!this.ticketdata.has("code")) {
+        if (!this.ticketdata.has("code") || this.ticketdata.get("code").toString().equals("200")) {
             showCont();
         } else {
             switch (this.status){

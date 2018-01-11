@@ -17,7 +17,6 @@ public class Start extends AppCompatActivity {
         setContentView(R.layout.activity_start);
 
         String key = PreferenceManager.getDefaultSharedPreferences(getBaseContext()).getString("saved_api_key", "default");
-        System.out.println("keyvalue: " + key);
         if ( !key.equals("default")  ) {
             Intent change = new Intent(getBaseContext(), MainMenue.class);
             startActivity(change);
