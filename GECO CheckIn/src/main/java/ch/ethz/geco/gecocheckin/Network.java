@@ -29,28 +29,32 @@ public class Network extends AsyncTask<String, String, String> {
     private String requestType;
     private Loading loading;
     private String content;
-    private AppCompatActivity origin;
-    private NetworkActivity target;
+    private NetworkActivity origin;
+    private boolean debug;
 
     /**
      * Initilize all vars
      * @param requestType POST or GET
      * @param content POST content for request
      * @param origin Calling class
-     * @param target Class to open when done with result
      */
-    Network(String urlex, String requestType, String content, int timeout, AppCompatActivity origin, NetworkActivity target) {
+    Network(String urlex, String requestType, String content, int timeout, NetworkActivity origin) {
         this.timeout = timeout;
         this.requestType = requestType;
         this.content = content;
         this.origin = origin;
-        this.target = target;
-        this.loading = new Loading(this.origin, this.target);
+        this.loading = new Loading(this.origin);
         this.apikey = PreferenceManager.getDefaultSharedPreferences(origin.getBaseContext()).getString("saved_api_key", "error");
         this.serverurl = PreferenceManager.getDefaultSharedPreferences(origin.getBaseContext()).getString("saved_server_ip", "error");
+        this.debug = Boolean.parseBoolean(PreferenceManager.getDefaultSharedPreferences(origin.getBaseContext()).getString("saved_debug_status", "error"));
         this.serverurl += urlex;
         if (this.apikey.contains("error") || this.serverurl.contains("error")) {
             Toast.makeText(origin, "Fehler! Bitte App resetten!", Toast.LENGTH_LONG).show();
+        }
+        if(this.debug){
+            Toast.makeText(origin, "New Network request!", Toast.LENGTH_LONG).show();
+            Toast.makeText(origin, "Type: " + this.requestType, Toast.LENGTH_LONG).show();
+            Toast.makeText(origin, "Content: " + this.content, Toast.LENGTH_LONG).show();
         }
     }
 
@@ -72,7 +76,9 @@ public class Network extends AsyncTask<String, String, String> {
         HttpURLConnection c = null;
         try {
             //Open network connection to Host
-            System.out.println("Connect to " + this.serverurl + " with apikey " + this.apikey);
+            if(this.debug){
+                Toast.makeText(origin, "Connect to " + this.serverurl + " with apikey " + this.apikey, Toast.LENGTH_LONG).show();
+            }
             URL u = new URL(this.serverurl);
             c = (HttpURLConnection) u.openConnection();
             c.setRequestMethod(this.requestType);
@@ -96,7 +102,9 @@ public class Network extends AsyncTask<String, String, String> {
 
             //Get HTTP response Code
             int status = c.getResponseCode();
-            System.out.println("HTTP Status: " + status);
+            if(this.debug){
+                Toast.makeText(origin, "HTTP Status: " + status, Toast.LENGTH_LONG).show();
+            }
 
             //Read result if response 200
             switch (status) {
@@ -137,16 +145,16 @@ public class Network extends AsyncTask<String, String, String> {
      */
     @Override
     protected void onPostExecute(String a){
-        //System.out.println(a);
+        if(this.debug){
+            Toast.makeText(origin, "HTTP res: " + a, Toast.LENGTH_LONG).show();
+        }
         //TODO: switch to target
         if ( !a.contains("Fehler") ) {
-            this.target.showResult(a);
+            this.origin.showResult(a);
             this.loading.done();
         } else {
-            Toast.makeText(this.target, a, Toast.LENGTH_LONG).show();
+            Toast.makeText(this.origin, a, Toast.LENGTH_LONG).show();
             this.loading.done();
         }
-
-        //TODO: switch to target?
     }
 }

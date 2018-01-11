@@ -2,10 +2,11 @@ package ch.ethz.geco.gecocheckin;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.Button;
 
-public class MainMenue extends NetworkActivity {
+public class MainMenue extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -61,7 +62,4 @@ public class MainMenue extends NetworkActivity {
         startActivity(change);
     }
 
-    public void showResult(String res){
-        //TODO: implement
-    }
 }

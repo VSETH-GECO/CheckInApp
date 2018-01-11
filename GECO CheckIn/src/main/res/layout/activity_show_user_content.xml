@@ -46,7 +46,6 @@
         android:layout_marginBottom="16dp"
         android:layout_marginRight="16dp"
         android:clickable="true"
-        android:onClick="checkIn"
         app:backgroundTint="#ff001c"
         app:fabSize="mini"
         app:layout_constraintBottom_toBottomOf="parent"

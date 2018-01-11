@@ -10,17 +10,14 @@ import android.support.v7.app.AppCompatActivity;
 public class Loading {
 
     private AppCompatActivity dialogTarget;
-    private AppCompatActivity afterLoadingTarget;
     private ProgressDialog dialog;
 
     /**
      * Initialize vars
      * @param dialogTarget
-     * @param afterLoadingTarget
      */
-    Loading(AppCompatActivity dialogTarget, AppCompatActivity afterLoadingTarget) {
+    Loading(AppCompatActivity dialogTarget) {
         this.dialogTarget = dialogTarget;
-        this.afterLoadingTarget = afterLoadingTarget;
     }
 
     /**
@@ -40,6 +37,5 @@ public class Loading {
      */
     public void done(){
         dialog.hide();
-        //TODO: Change to target
     }
 }
