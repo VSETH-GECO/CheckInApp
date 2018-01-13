@@ -39,9 +39,11 @@ public class ShowUserContent extends NetworkActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_show_user_content);
 
+        //checkin button action listener
         final FloatingActionButton checkin_btn = (FloatingActionButton) findViewById(R.id.checkin_btn);
         checkin_btn.setOnClickListener(new View.OnClickListener() { public void onClick(View v) { checkIn(); } } );
 
+        //init values
         this.status = 0;
         this.userId = -1;
 
@@ -52,6 +54,7 @@ public class ShowUserContent extends NetworkActivity {
             extra = b.getString("scan");
         }
         try {
+            //parse qr to json object
             JsonParser parser = new JsonParser();
             this.scanres = (JsonObject) parser.parse(extra);
             this.userId = this.scanres.get("id").getAsInt();
@@ -65,7 +68,7 @@ public class ShowUserContent extends NetworkActivity {
     }
 
     /**
-     * Present Userdata and calculate userage and verify SA
+     * Present Userdata, calculate userage and verify SA
      */
     private void showCont() {
         TextView data = (TextView) findViewById(R.id.contentView);
@@ -81,8 +84,10 @@ public class ShowUserContent extends NetworkActivity {
             Calendar calendar = GregorianCalendar.getInstance();
             calendar.set(Calendar.YEAR, calendar.get(Calendar.YEAR) - 18);
             boolean over18 = birthday.before(calendar.getTime());
+            //is verifyed?
             boolean ver = this.ticketdata.get("sa_verified").getAsBoolean();
 
+            //add Data to Screen
             data.setText("\nStatus: " + this.ticketdata.get("status").getAsString());
             data.append("\nUser-ID: " + this.ticketdata.get("id").getAsString());
             data.append("\nUsername: " + this.ticketdata.get("username").getAsString());
@@ -146,7 +151,6 @@ public class ShowUserContent extends NetworkActivity {
         builder.setPositiveButton("Jup", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
-                System.out.println("legi " + input.getText().toString());
                 getLegiIDFromDialog(input.getText().toString());
             }
         });
@@ -168,7 +172,6 @@ public class ShowUserContent extends NetworkActivity {
      * @param id
      */
     private void getLegiIDFromDialog(String id){
-        System.out.println("legi@method: " + id);
         JsonObject post = new JsonObject();
         post.addProperty("sa_verified", true);
         post.addProperty("legi_number", id);
@@ -176,7 +179,7 @@ public class ShowUserContent extends NetworkActivity {
     }
 
     /**
-     * Confirm the checkin
+     * Confirm the checkin and execute
      */
     private void checkIn() {
         if (this.status == 1) {
@@ -226,11 +229,17 @@ public class ShowUserContent extends NetworkActivity {
                 .show();
     }
 
-
+    /**
+     * Get data/response from Network Object
+     * @param res
+     */
     public void showResult(String res) {
         JsonParser parser = new JsonParser();
-        this.ticketdata = (JsonObject) parser.parse(res);
-        if (!this.ticketdata.has("code") || this.ticketdata.get("code").toString().equals("200")) {
+        JsonObject jo = (JsonObject) parser.parse(res);
+        if (!jo.has("code") || jo.get("code").toString().equals("200")) {
+            if(!jo.has("code")){
+                this.ticketdata = jo;
+            }
             showCont();
         } else {
             switch (this.status){
