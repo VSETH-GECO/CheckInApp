@@ -94,10 +94,12 @@ public class ShowUserContent extends NetworkActivity {
             data.append("\nName: " + this.ticketdata.get("fist_name").getAsString() + " " + this.ticketdata.get("last_name").getAsString());
             data.append("\nGeburtstag: " + new SimpleDateFormat("dd.MM.yyyy").format(birthday) + " (über 18: " + (over18 ? "Ja" : "Nein") + ")");
 
-            if (!this.ticketdata.get("seat").isJsonNull())
+            if (!this.ticketdata.get("seat").isJsonNull()) {
                 data.append("\nSitzplatz: " + this.ticketdata.get("seat").getAsString());
-            else
+            } else {
                 data.append("\nSitzplatz: User hat noch keinen Sitzplatz!");
+                this.status = 2;
+            }
             if (ver)
                 data.append("\nVerifikation: OK!");
             else
@@ -110,17 +112,14 @@ public class ShowUserContent extends NetworkActivity {
             data.append("\nFachverein: " + this.ticketdata.get("student_association").getAsString());
 
 
-            status = this.ticketdata.get("status").getAsString();
-
-
             //Confirm age if User ist under 18
             if (!over18) {
-                this.status = 2;
+                this.status = 3;
                 confirmAge();
             }
             //Confirm SA
             if (!ver) {
-                this.status = 3;
+                this.status = 4;
                 confirmSA(this.ticketdata.get("package").getAsString(), this.ticketdata.get("student_association").getAsString());
             }
 
@@ -172,10 +171,17 @@ public class ShowUserContent extends NetworkActivity {
      * @param id
      */
     private void getLegiIDFromDialog(String id){
-        JsonObject post = new JsonObject();
-        post.addProperty("sa_verified", true);
-        post.addProperty("legi_number", id);
-        new Network("/lan/user/" + this.userId + "/verify", "PATCH", post.toString(), 5000, this).execute();
+        //Legi Format regexp
+        String regex = "[0-9]{2}-[0-9]{3}-[0-9]{3}";
+        if(id.matches(regex)){
+            JsonObject post = new JsonObject();
+            post.addProperty("sa_verified", true);
+            post.addProperty("legi_number", id);
+            new Network("/lan/user/" + this.userId + "/verify", "PATCH", post.toString(), 5000, this).execute();
+        } else {
+            Toast.makeText(ShowUserContent.this, "Legi-Nummer ist nicht richtig formatiert. Bitte versuche es erneut!", Toast.LENGTH_LONG).show();
+            confirmSA(this.ticketdata.get("package").getAsString(), this.ticketdata.get("student_association").getAsString());
+        }
     }
 
     /**
@@ -183,19 +189,22 @@ public class ShowUserContent extends NetworkActivity {
      */
     private void checkIn() {
         if (this.status == 1) {
-            this.status = 4;
+            this.status = 5;
             JsonObject post = new JsonObject();
             post.addProperty("checkin_string", this.validateString);
             new Network("/lan/user/" + this.userId + "/checkin", "PATCH", post.toString(), 5000, this).execute();
         } else {
             switch (this.status){
                 case 2:
-                    Toast.makeText(ShowUserContent.this, "Alter des Users ist nicht bestätigt!", Toast.LENGTH_LONG).show();
+                    Toast.makeText(ShowUserContent.this, "User hat keinen Sitzplatz!", Toast.LENGTH_LONG).show();
                     break;
                 case 3:
-                    Toast.makeText(ShowUserContent.this, "User ist nicht verifiziert!", Toast.LENGTH_LONG).show();
+                    Toast.makeText(ShowUserContent.this, "Alter des Users ist nicht bestätigt!", Toast.LENGTH_LONG).show();
                     break;
                 case 4:
+                    Toast.makeText(ShowUserContent.this, "User ist nicht verifiziert!", Toast.LENGTH_LONG).show();
+                    break;
+                case 5:
                     Toast.makeText(ShowUserContent.this, "Checkin fehlgeschlagen!", Toast.LENGTH_LONG).show();
                     break;
                 default:
@@ -243,10 +252,10 @@ public class ShowUserContent extends NetworkActivity {
             showCont();
         } else {
             switch (this.status){
-                case 3:
+                case 4:
                     Toast.makeText(ShowUserContent.this, "SA konnte nicht aktualisiert werden!", Toast.LENGTH_LONG).show();
                     break;
-                case 4:
+                case 5:
                     Toast.makeText(ShowUserContent.this, "Checkin fehlgeschlagen!", Toast.LENGTH_LONG).show();
                     break;
                 default:
@@ -255,4 +264,5 @@ public class ShowUserContent extends NetworkActivity {
             }
         }
     }
+
 }
