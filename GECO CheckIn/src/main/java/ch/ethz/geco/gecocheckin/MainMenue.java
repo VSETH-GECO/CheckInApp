@@ -41,7 +41,7 @@ public class MainMenue extends AppCompatActivity {
      * Open FindUser view
      */
     private void finduser(){
-        Intent change = new Intent(getBaseContext(), FindUser.class);
+        Intent change = new Intent(getBaseContext(), SearchUser.class);
         startActivity(change);
     }
 

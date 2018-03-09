@@ -91,6 +91,7 @@ public class ShowUserContent extends NetworkActivity {
             data.setText("\nStatus: " + this.ticketdata.get("status").getAsString());
             data.append("\nUser-ID: " + this.ticketdata.get("id").getAsString());
             data.append("\nUsername: " + this.ticketdata.get("username").getAsString());
+            //TODO: change "fist_name" to "first_name" when fixed in backend
             data.append("\nName: " + this.ticketdata.get("fist_name").getAsString() + " " + this.ticketdata.get("last_name").getAsString());
             data.append("\nGeburtstag: " + new SimpleDateFormat("dd.MM.yyyy").format(birthday) + " (über 18: " + (over18 ? "Ja" : "Nein") + ")");
 
@@ -135,6 +136,14 @@ public class ShowUserContent extends NetworkActivity {
      * @param student_association
      */
     private void confirmSA(String aPackage, String student_association) {
+        if(aPackage.equals("External")){
+            JsonObject post = new JsonObject();
+            post.addProperty("sa_verified", true);
+            post.addProperty("legi_number", "none");
+            new Network("/lan/user/" + this.userId + "/verify", "PATCH", post.toString(), 5000, this).execute();
+            return;
+        }
+
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle("Bitte prüfe die folgenden Angaben:");
         builder.setMessage(aPackage + "\n" + student_association);

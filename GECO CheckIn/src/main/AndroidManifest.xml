@@ -25,7 +25,6 @@
         <activity android:name=".Rent" />
         <activity android:name=".SearchUser" />
         <activity android:name=".SearchSeat"></activity>
-        <activity android:name=".FindUser"></activity>
 
     </application>
 

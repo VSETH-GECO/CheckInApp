@@ -93,9 +93,9 @@ public class Network extends AsyncTask<String, String, String> {
 
             c.connect();
 
-            //Content only for POST
-            if (this.requestType.equals("PATCH")) {
-                String str =  this.content;
+            //Content only for POST and PATCH
+            if (this.requestType.equals("PATCH") || this.requestType.equals("POST")) {
+                String str = this.content;
                 byte[] outputInBytes = str.getBytes("UTF-8");
                 OutputStream os = c.getOutputStream();
                 os.write( outputInBytes );
@@ -124,6 +124,8 @@ public class Network extends AsyncTask<String, String, String> {
                     br.close();
                     System.out.println("returns: " + sb.toString());
                     return sb.toString();
+                case 404:
+                    return "Fehler! Nicht gefunden.";
             }
 
         } catch (MalformedURLException ex) {
