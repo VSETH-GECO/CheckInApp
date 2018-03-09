@@ -58,6 +58,8 @@ public class Network extends AsyncTask<String, String, String> {
             Toast.makeText(origin, "Content: " + this.content, Toast.LENGTH_LONG).show();
             Toast.makeText(origin, "Connect to " + this.serverurl + " with apikey " + this.apikey, Toast.LENGTH_LONG).show();
         }
+        System.out.println("Content: " + this.content);
+        System.out.println("Connect to " + this.serverurl + " with apikey " + this.apikey);
     }
 
     /**
@@ -104,11 +106,15 @@ public class Network extends AsyncTask<String, String, String> {
             if(this.debug){
                 this.status = status;
             }
+            System.out.println("Status: " + status);
 
             //Read result if response 200
             switch (status) {
                 case 200:
                 case 201:
+                case 202:
+                case 203:
+                case 204:
                     BufferedReader br = new BufferedReader(new InputStreamReader(c.getInputStream()));
                     StringBuilder sb = new StringBuilder();
                     String line;
@@ -148,7 +154,6 @@ public class Network extends AsyncTask<String, String, String> {
             Toast.makeText(origin, "HTTP Status: " + this.status, Toast.LENGTH_LONG).show();
             Toast.makeText(origin, "HTTP res: " + a, Toast.LENGTH_LONG).show();
         }
-        //TODO: switch to target
         if ( !a.contains("Fehler") ) {
             this.origin.showResult(a);
             this.loading.done();
