@@ -91,8 +91,7 @@ public class ShowUserContent extends NetworkActivity {
             data.setText("\nStatus: " + this.ticketdata.get("status").getAsString());
             data.append("\nUser-ID: " + this.ticketdata.get("id").getAsString());
             data.append("\nUsername: " + this.ticketdata.get("username").getAsString());
-            //TODO: change "fist_name" to "first_name" when fixed in backend
-            data.append("\nName: " + this.ticketdata.get("fist_name").getAsString() + " " + this.ticketdata.get("last_name").getAsString());
+            data.append("\nName: " + this.ticketdata.get("first_name").getAsString() + " " + this.ticketdata.get("last_name").getAsString());
             data.append("\nGeburtstag: " + new SimpleDateFormat("dd.MM.yyyy").format(birthday) + " (über 18: " + (over18 ? "Ja" : "Nein") + ")");
 
             if (!this.ticketdata.get("seat").isJsonNull()) {
@@ -112,16 +111,13 @@ public class ShowUserContent extends NetworkActivity {
             data.append("\nPaket: " + this.ticketdata.get("package").getAsString());
             data.append("\nFachverein: " + this.ticketdata.get("student_association").getAsString());
 
-
-            //Confirm age if User ist under 18
-            if (!over18) {
-                this.status = 3;
-                confirmAge();
-            }
-            //Confirm SA
+            //Confirm SA and Age
             if (!ver) {
                 this.status = 4;
                 confirmSA(this.ticketdata.get("package").getAsString(), this.ticketdata.get("student_association").getAsString());
+            } else if (!over18) {
+                this.status = 3;
+                confirmAge();
             }
 
         } catch (Exception e) {
@@ -147,7 +143,6 @@ public class ShowUserContent extends NetworkActivity {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle("Bitte prüfe die folgenden Angaben:");
         builder.setMessage(aPackage + "\n" + student_association);
-
 
         final EditText input = new EditText(this);
 
@@ -227,24 +222,26 @@ public class ShowUserContent extends NetworkActivity {
      * Dialog Box to confirm, that the user has permission
      */
     private void confirmAge() {
-        new AlertDialog.Builder(ShowUserContent.this)
-                .setTitle("Altersprüfung")
-                .setMessage("User ist nicht über 18! Ist eine Erlaubnis der Eltern vorhanden?")
-                .setIcon(0)
-                .setPositiveButton("Jup", new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int which) {
-                        status = 1;
-                    }
-                })
-                .setNegativeButton("Nope", new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int which) {
-                        Toast.makeText(ShowUserContent.this, "Checkin abgebrochen!", Toast.LENGTH_LONG).show();
-                        Intent change = new Intent(getBaseContext(), Scan.class);
-                        startActivity(change);
-                    }
-                })
-                .setIcon(android.R.drawable.ic_dialog_alert)
-                .show();
+        if(!this.ticketdata.get("status").getAsString().equalsIgnoreCase("user has been checked in!")) {
+            new AlertDialog.Builder(ShowUserContent.this)
+                    .setTitle("Altersprüfung")
+                    .setMessage("User ist nicht über 18! Ist eine Erlaubnis der Eltern vorhanden?")
+                    .setIcon(0)
+                    .setPositiveButton("Jup", new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int which) {
+                            status = 1;
+                        }
+                    })
+                    .setNegativeButton("Nope", new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int which) {
+                            Toast.makeText(ShowUserContent.this, "Checkin abgebrochen!", Toast.LENGTH_LONG).show();
+                            Intent change = new Intent(getBaseContext(), Scan.class);
+                            startActivity(change);
+                        }
+                    })
+                    .setIcon(android.R.drawable.ic_dialog_alert)
+                    .show();
+        }
     }
 
     /**

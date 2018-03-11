@@ -53,6 +53,9 @@ public class MainMenue extends AppCompatActivity {
         startActivity(change);
     }
 
+    /**
+     * Open Seat view
+     */
     private void findSeat(){
         Intent change = new Intent(getBaseContext(), SearchSeat.class);
         startActivity(change);
