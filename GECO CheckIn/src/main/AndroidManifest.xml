@@ -22,9 +22,9 @@
         <activity android:name=".Scan" />
         <activity android:name=".ShowUserContent" />
         <activity android:name=".MainMenue" />
-        <activity android:name=".Rent" />
+        <activity android:name=".Rent" android:windowSoftInputMode="stateAlwaysHidden|adjustResize|adjustPan" />
         <activity android:name=".SearchUser" />
-        <activity android:name=".SearchSeat"></activity>
+        <activity android:name=".SearchSeat" />
 
     </application>
 
