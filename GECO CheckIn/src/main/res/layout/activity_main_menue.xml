@@ -73,9 +73,9 @@
         android:text="Ticketscan"
         android:textSize="18sp"
         android:visibility="visible"
+        app:layout_constraintBottom_toTopOf="@+id/btn_findSeat"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toLeftOf="@+id/btn_findUser"
-        app:layout_constraintBottom_toTopOf="@+id/btn_findSeat"
         app:layout_constraintTop_toBottomOf="@+id/logo" />
 
     <Button
