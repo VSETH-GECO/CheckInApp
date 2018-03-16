@@ -176,7 +176,7 @@ public class Rent extends NetworkActivity {
             for (int i = 0; i < items.size(); i++) {
                 JsonObject it = (JsonObject) items.get(i);
                 adapter.add(it.get("name").getAsString());
-                itemid.put(adapter.getPosition(it.get("name").getAsString()), it.get("id").getAsInt());
+                itemid.put(i, it.get("id").getAsInt());
             }
         }
     }
