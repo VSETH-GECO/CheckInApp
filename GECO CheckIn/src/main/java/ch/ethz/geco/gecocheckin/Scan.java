@@ -74,6 +74,7 @@ public class Scan extends AppCompatActivity {
                 b.putString("scan", scanres);
                 change.putExtras(b);
                 startActivity(change);
+                finish();
             }
         }
         else {
