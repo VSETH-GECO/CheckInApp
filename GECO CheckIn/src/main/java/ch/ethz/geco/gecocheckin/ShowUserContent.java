@@ -109,12 +109,20 @@ public class ShowUserContent extends NetworkActivity {
             else
                 data.append("\nLeginummer:");
             data.append("\nPaket: " + this.ticketdata.get("package").getAsString());
-            data.append("\nFachverein: " + this.ticketdata.get("student_association").getAsString());
+            String jsonSAcont = "none";
+            try {
+                jsonSAcont = this.ticketdata.get("student_association").getAsString();
+            }
+            catch (UnsupportedOperationException e) {
+                System.out.println("Not Fachverein set.");
+            }
+
+            data.append("\nFachverein: " + jsonSAcont);
 
             //Confirm SA and Age
             if (!ver) {
                 this.status = 4;
-                confirmSA(this.ticketdata.get("package").getAsString(), this.ticketdata.get("student_association").getAsString());
+                confirmSA(this.ticketdata.get("package").getAsString(), jsonSAcont);
             } else if (!over18) {
                 this.status = 3;
                 confirmAge();
