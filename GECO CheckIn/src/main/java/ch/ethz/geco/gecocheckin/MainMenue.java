@@ -69,6 +69,7 @@ public class MainMenue extends AppCompatActivity {
         PreferenceManager.getDefaultSharedPreferences(getBaseContext()).edit().putString("saved_server_ip", "default").commit();
         Intent change = new Intent(getBaseContext(), Start.class);
         startActivity(change);
+        finish();
     }
 
 
