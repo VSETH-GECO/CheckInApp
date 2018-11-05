@@ -100,10 +100,7 @@ public class ShowUserContent extends NetworkActivity {
                 data.append("\nSitzplatz: User hat noch keinen Sitzplatz!");
                 this.status = 2;
             }
-            if (ver)
-                data.append("\nVerifikation: OK!");
-            else
-                data.append("\nVerifikation: Nope");
+            data.append("\nVerifikation: " + (ver ? "Ja" : "Nein") + "!");
             if (!this.ticketdata.get("legi_number").isJsonNull())
                 data.append("\nLeginummer: " + this.ticketdata.get("legi_number").getAsString());
             else
