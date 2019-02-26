@@ -17,7 +17,7 @@ node {
         }
 		
 		stage('Archive Artifacts') {
-			archiveArtifacts artifacts: '**/build/outputs/apk/*.apk', fingerprint: true
+			archiveArtifacts artifacts: './GECO CheckIn/build/outputs/apk/release/*.apk', fingerprint: true
 		}
     }
 }
