@@ -6,11 +6,9 @@ node {
         }
 
         stage('Android Build') {
-            docker.image('thyrlian/android-sdk:latest') {
+            docker.image('thyrlian/android-sdk:latest').inside {
                 sh './gradlew clean build assembleRelease'
             }
-
-            
         }
 		
 		stage('Archive Artifacts') {
