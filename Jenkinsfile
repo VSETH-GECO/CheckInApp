@@ -6,13 +6,13 @@ node {
         }
 
         stage('Android Build') {
-            docker.image('thyrlian/android-sdk:latest').inside {
-				withCredentials([string(credentialsId: 'keystore-password', variable: 'PASSWORD')]) {
+			withCredentials([string(credentialsId: 'keystore-password', variable: 'PASSWORD')]) {
+				docker.image('thyrlian/android-sdk:latest').inside {
 					sh 'sed -i 's/#KEYPASSWORD#/$PASSWORD/g' "./GECO CheckIn/build.gradlew"'
+					sh 'chmod +x gradlew'
+					sh './gradlew clean build assembleRelease'
 				}
-				sh 'chmod +x gradlew'
-                sh './gradlew clean build assembleRelease'
-            }
+			}
         }
 		
 		stage('Archive Artifacts') {
