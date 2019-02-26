@@ -1,6 +1,7 @@
 package ch.ethz.geco.gecocheckin;
 
 import android.content.Intent;
+import android.preference.PreferenceManager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
@@ -18,13 +19,21 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
 
-public class SearchUser extends NetworkActivity {
-    private int userId;
+import ch.ethz.geco.g4j.impl.DefaultGECoClient;
+import ch.ethz.geco.g4j.obj.GECoClient;
+import ch.ethz.geco.g4j.obj.LanUser;
+import ch.ethz.geco.g4j.obj.Seat;
+
+public class SearchUser extends AppCompatActivity {
+    private GECoClient client;
+    private LanUser user;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_search_user);
+
+        this.client = new DefaultGECoClient(PreferenceManager.getDefaultSharedPreferences(this.getBaseContext()).getString("saved_api_key", "error"));
 
         //Setup Button action listener
         final Button btn_go = (Button) findViewById(R.id.btn_go);
@@ -54,7 +63,7 @@ public class SearchUser extends NetworkActivity {
                 //parse qr to json object
                 JsonParser parser = new JsonParser();
                 JsonObject scanres = (JsonObject) parser.parse(extra);
-                this.userId = scanres.get("id").getAsInt();
+                this.user = this.client.getLanUserByID(scanres.get("id").getAsLong());
                 search();
             } catch (Exception e) {
                 e.printStackTrace();
@@ -67,13 +76,17 @@ public class SearchUser extends NetworkActivity {
      */
     private void search(){
         EditText userName = (EditText) findViewById(R.id.txt_username);
-        EditText seat = (EditText) findViewById(R.id.txt_seat);
+        EditText seatEditText = (EditText) findViewById(R.id.txt_seat);
         if (userName.getText().toString().length() > 0) {
-            new Network("/lan/search/user/" + userName.getText().toString(), "GET", "", 5000, this).execute();
-        } else if (seat.getText().toString().length() > 0) {
-            new Network("/lan/search/seat/" + seat.getText().toString(), "GET", "", 5000, this).execute();
-        } else if (userId != 0) {
-            new Network("/lan/user/" + userId, "GET", "", 5000, this).execute();
+            this.user = this.client.getLanUserByName(userName.getText().toString());
+        } else if (seatEditText.getText().toString().length() > 0) {
+            Seat seat = this.client.getSeatByName(seatEditText.getText().toString());
+            if(seat.getLanUserID().isPresent())
+                this.user = this.client.getLanUserByID(seat.getLanUserID().get());
+        }
+
+        if (this.user != null) {
+            showCont();
         } else {
             Toast.makeText(this, "Bitte gibt einen Usernamen oder Platz an!", Toast.LENGTH_LONG).show();
         }
@@ -81,9 +94,8 @@ public class SearchUser extends NetworkActivity {
 
     /**
      * Display data
-     * @param userdata
      */
-    private void showCont(JsonObject userdata) {
+    private void showCont() {
         TextView data = (TextView) findViewById(R.id.contentView);
 
         String status = "ERROR";
@@ -91,54 +103,38 @@ public class SearchUser extends NetworkActivity {
         //Generate Text from request to display
         try {
             //Check if user is over 18
-            long unixbirthday = userdata.get("birthday").getAsLong() * 1000;
-            Date birthday = new Date(unixbirthday);
+            long unixBirthDay = user.getBirthDay() * 1000;
+            Date birthday = new Date(unixBirthDay);
             Calendar calendar = GregorianCalendar.getInstance();
             calendar.set(Calendar.YEAR, calendar.get(Calendar.YEAR) - 18);
             boolean over18 = birthday.before(calendar.getTime());
-            //is verifyed?
-            boolean ver = userdata.get("sa_verified").getAsBoolean();
 
             //add Data to Screen
-            data.setText("\nStatus: " + userdata.get("status").getAsString());
-            data.append("\nUser-ID: " + userdata.get("id").getAsString());
-            data.append("\nUsername: " + userdata.get("username").getAsString());
-            data.append("\nName: " + userdata.get("first_name").getAsString() + " " + userdata.get("last_name").getAsString());
-            data.append("\nGeburtstag: " + new SimpleDateFormat("dd.MM.yyyy").format(birthday) + " (über 18: " + (over18 ? "Ja" : "Nein") + ")");
+            data.setText(String.format("\nStatus: %s", user.getStatus()));
+            data.append(String.format("\nUser-ID: %s", user.getID()));
+            data.append(String.format("\nUsername: %s", user.getUserName()));
+            data.append(String.format("\nName: %s", user.getFirstName()));
+            data.append(String.format("\nGeburtstag: %s (über 18: %s)", new SimpleDateFormat("dd.MM.yyyy").format(birthday), (over18 ? "Ja" : "Nein")));
 
-            if (!userdata.get("seat").isJsonNull()) {
-                data.append("\nSitzplatz: " + userdata.get("seat").getAsString());
+            if (user.getSeatName().isPresent()) {
+                data.append(String.format("\nSitzplatz: %s", user.getSeatName().get()));
             } else {
                 data.append("\nSitzplatz: User hat noch keinen Sitzplatz!");
             }
-            if (ver)
-                data.append("\nVerifikation: OK!");
-            else
-                data.append("\nVerifikation: Nope");
-            if (!userdata.get("legi_number").isJsonNull())
-                data.append("\nLeginummer: " + userdata.get("legi_number").getAsString());
+            data.append(String.format("\nVerifikation: %s!", (user.isVerified() ? "Ja" : "Nein")));
+            if (user.getLegiNumber().isPresent())
+                data.append(String.format("\nLeginummer: %s", user.getLegiNumber().get()));
             else
                 data.append("\nLeginummer:");
-            data.append("\nFachverein: " + userdata.get("student_association").getAsString());
+            data.append(String.format("\nPaket: %s", user.getLANPackage()));
+            if (user.getStudentAssoc().isPresent())
+                data.append(String.format("\nFachverein: %s", user.getStudentAssoc().get()));
+            else
+                data.append("\nFachverein: none");
 
         } catch (Exception e) {
             e.printStackTrace();
             data.setText("Fehler beim darstellen der Daten. Bitte versuche es erneut!");
-        }
-    }
-
-    /**
-     * Get network result
-     * @param res
-     */
-    public void showResult(String res) {
-        if (res.length() == 0) {
-            return;
-        }
-        JsonParser parser = new JsonParser();
-        JsonObject jo = (JsonObject) parser.parse(res);
-        if (jo.has("status")) {
-            showCont(jo);
         }
     }
 }

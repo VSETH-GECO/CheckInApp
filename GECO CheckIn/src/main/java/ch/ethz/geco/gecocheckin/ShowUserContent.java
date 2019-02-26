@@ -6,9 +6,9 @@ import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AlertDialog;
+import android.support.v7.app.AppCompatActivity;
 import android.text.InputType;
 import android.view.View;
-import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -16,16 +16,22 @@ import android.widget.Toast;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
+import org.apache.http.impl.client.HttpClients;
+
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
 
-public class ShowUserContent extends NetworkActivity {
+import ch.ethz.geco.g4j.impl.DefaultGECoClient;
+import ch.ethz.geco.g4j.obj.GECoClient;
+import ch.ethz.geco.g4j.obj.LanUser;
+
+public class ShowUserContent extends AppCompatActivity {
 
     private JsonObject scanres;
-    private JsonObject ticketdata;
-    private int userId;
+    private GECoClient client;
+    private LanUser user;
     private int status;
     private String validateString;
 
@@ -45,7 +51,7 @@ public class ShowUserContent extends NetworkActivity {
 
         //init values
         this.status = 0;
-        this.userId = -1;
+        int userId = -1;
 
         //get result of qr code
         Bundle b = getIntent().getExtras();
@@ -57,20 +63,23 @@ public class ShowUserContent extends NetworkActivity {
             //parse qr to json object
             JsonParser parser = new JsonParser();
             this.scanres = (JsonObject) parser.parse(extra);
-            this.userId = this.scanres.get("id").getAsInt();
+            userId = this.scanres.get("id").getAsInt();
             this.validateString = this.scanres.get("verification").getAsString();
         } catch (Exception e) {
             e.printStackTrace();
         }
 
         //validate Ticket and get Userdata
-        new Network("/lan/user/" + this.userId, "GET", "", 5000, this).execute();
+        String apiKey = PreferenceManager.getDefaultSharedPreferences(this.getBaseContext()).getString("saved_api_key", "error");
+        client = new DefaultGECoClient(apiKey);
+        this.user = client.getLanUserByID((long) userId);
+        showCont(this.user);
     }
 
     /**
      * Present Userdata, calculate userage and verify SA
      */
-    private void showCont() {
+    private void showCont(LanUser user) {
         TextView data = (TextView) findViewById(R.id.contentView);
 
         String status = "ERROR";
@@ -79,48 +88,44 @@ public class ShowUserContent extends NetworkActivity {
         try {
             this.status = 1;
             //Check if user is over 18
-            long unixbirthday = this.ticketdata.get("birthday").getAsLong() * 1000;
-            Date birthday = new Date(unixbirthday);
+            long unixBirthDay = user.getBirthDay() * 1000;
+            Date birthday = new Date(unixBirthDay);
             Calendar calendar = GregorianCalendar.getInstance();
             calendar.set(Calendar.YEAR, calendar.get(Calendar.YEAR) - 18);
             boolean over18 = birthday.before(calendar.getTime());
-            //is verifyed?
-            boolean ver = this.ticketdata.get("sa_verified").getAsBoolean();
 
             //add Data to Screen
-            data.setText("\nStatus: " + this.ticketdata.get("status").getAsString());
-            data.append("\nUser-ID: " + this.ticketdata.get("id").getAsString());
-            data.append("\nUsername: " + this.ticketdata.get("username").getAsString());
-            data.append("\nName: " + this.ticketdata.get("first_name").getAsString() + " " + this.ticketdata.get("last_name").getAsString());
-            data.append("\nGeburtstag: " + new SimpleDateFormat("dd.MM.yyyy").format(birthday) + " (über 18: " + (over18 ? "Ja" : "Nein") + ")");
+            data.setText(String.format("\nStatus: %s", user.getStatus()));
+            data.append(String.format("\nUser-ID: %s", user.getID()));
+            data.append(String.format("\nUsername: %s", user.getUserName()));
+            data.append(String.format("\nName: %s", user.getFirstName()));
+            data.append(String.format("\nGeburtstag: %s (über 18: %s)", new SimpleDateFormat("dd.MM.yyyy").format(birthday), (over18 ? "Ja" : "Nein")));
 
-            if (!this.ticketdata.get("seat").isJsonNull()) {
-                data.append("\nSitzplatz: " + this.ticketdata.get("seat").getAsString());
+            if (user.getSeatName().isPresent()) {
+                data.append(String.format("\nSitzplatz: %s", user.getSeatName().get()));
             } else {
                 data.append("\nSitzplatz: User hat noch keinen Sitzplatz!");
                 this.status = 2;
             }
-            data.append("\nVerifikation: " + (ver ? "Ja" : "Nein") + "!");
-            if (!this.ticketdata.get("legi_number").isJsonNull())
-                data.append("\nLeginummer: " + this.ticketdata.get("legi_number").getAsString());
+            data.append(String.format("\nVerifikation: %s!", (user.isVerified() ? "Ja" : "Nein")));
+            if (user.getLegiNumber().isPresent())
+                data.append(String.format("\nLeginummer: %s", user.getLegiNumber().get()));
             else
                 data.append("\nLeginummer:");
-            data.append("\nPaket: " + this.ticketdata.get("package").getAsString());
-            String jsonSAcont = "none";
-            try {
-                jsonSAcont = this.ticketdata.get("student_association").getAsString();
-            }
-            catch (UnsupportedOperationException e) {
-                System.out.println("Not Fachverein set.");
-            }
-
-            data.append("\nFachverein: " + jsonSAcont);
+            data.append(String.format("\nPaket: %s", user.getLANPackage()));
+            if (user.getStudentAssoc().isPresent())
+                data.append(String.format("\nFachverein: %s", user.getStudentAssoc().get()));
+            else
+                data.append("\nFachverein: none");
 
             //Confirm SA and Age
-            if (!ver) {
+            if (!user.isVerified()) {
                 this.status = 4;
-                confirmSA(this.ticketdata.get("package").getAsString(), jsonSAcont);
-            } else if (!over18) {
+                if(user.getStudentAssoc().isPresent())
+                    confirmSA(user.getLANPackage(), user.getStudentAssoc().get());
+                else
+                    confirmSA(user.getLANPackage(), "none");
+            } else if (!over18 && this.status != 5) {
                 this.status = 3;
                 confirmAge();
             }
@@ -138,10 +143,7 @@ public class ShowUserContent extends NetworkActivity {
      */
     private void confirmSA(String aPackage, String student_association) {
         if(aPackage.equals("External")){
-            JsonObject post = new JsonObject();
-            post.addProperty("sa_verified", true);
-            post.addProperty("legi_number", "none");
-            new Network("/lan/user/" + this.userId + "/verify", "PATCH", post.toString(), 5000, this).execute();
+            this.user.setVerification(true, "");
             return;
         }
 
@@ -183,13 +185,11 @@ public class ShowUserContent extends NetworkActivity {
         //Legi Format regexp
         String regex = "[0-9]{2}-[0-9]{3}-[0-9]{3}";
         if(id.matches(regex)){
-            JsonObject post = new JsonObject();
-            post.addProperty("sa_verified", true);
-            post.addProperty("legi_number", id);
-            new Network("/lan/user/" + this.userId + "/verify", "PATCH", post.toString(), 5000, this).execute();
+            this.user.setVerification(true, id);
         } else {
             Toast.makeText(ShowUserContent.this, "Legi-Nummer ist nicht richtig formatiert. Bitte versuche es erneut!", Toast.LENGTH_LONG).show();
-            confirmSA(this.ticketdata.get("package").getAsString(), this.ticketdata.get("student_association").getAsString());
+            if(this.user.getStudentAssoc().isPresent())
+                confirmSA(this.user.getLANPackage(), this.user.getStudentAssoc().get());
         }
     }
 
@@ -199,9 +199,7 @@ public class ShowUserContent extends NetworkActivity {
     private void checkIn() {
         if (this.status == 1) {
             this.status = 5;
-            JsonObject post = new JsonObject();
-            post.addProperty("checkin_string", this.validateString);
-            new Network("/lan/user/" + this.userId + "/checkin", "PATCH", post.toString(), 5000, this).execute();
+            user.checkin(this.validateString);
         } else {
             switch (this.status){
                 case 2:
@@ -227,53 +225,24 @@ public class ShowUserContent extends NetworkActivity {
      * Dialog Box to confirm, that the user has permission
      */
     private void confirmAge() {
-        if(!this.ticketdata.get("status").getAsString().equalsIgnoreCase("user has been checked in!")) {
-            new AlertDialog.Builder(ShowUserContent.this)
-                    .setTitle("Altersprüfung")
-                    .setMessage("User ist nicht über 18! Ist eine Erlaubnis der Eltern vorhanden?")
-                    .setIcon(0)
-                    .setPositiveButton("Jup", new DialogInterface.OnClickListener() {
-                        public void onClick(DialogInterface dialog, int which) {
-                            status = 1;
-                        }
-                    })
-                    .setNegativeButton("Nope", new DialogInterface.OnClickListener() {
-                        public void onClick(DialogInterface dialog, int which) {
-                            Toast.makeText(ShowUserContent.this, "Checkin abgebrochen!", Toast.LENGTH_LONG).show();
-                            Intent change = new Intent(getBaseContext(), Scan.class);
-                            startActivity(change);
-                        }
-                    })
-                    .setIcon(android.R.drawable.ic_dialog_alert)
-                    .show();
-        }
-    }
-
-    /**
-     * Get data/response from Network Object
-     * @param res
-     */
-    public void showResult(String res) {
-        JsonParser parser = new JsonParser();
-        JsonObject jo = (JsonObject) parser.parse(res);
-        if (!jo.has("code") || jo.get("code").toString().equals("200")) {
-            if(!jo.has("code")){
-                this.ticketdata = jo;
-            }
-            showCont();
-        } else {
-            switch (this.status){
-                case 4:
-                    Toast.makeText(ShowUserContent.this, "SA konnte nicht aktualisiert werden!", Toast.LENGTH_LONG).show();
-                    break;
-                case 5:
-                    Toast.makeText(ShowUserContent.this, "Checkin fehlgeschlagen!", Toast.LENGTH_LONG).show();
-                    break;
-                default:
-                    Toast.makeText(ShowUserContent.this, "Es gab einen Fehler bei der Anfrage!", Toast.LENGTH_LONG).show();
-                    break;
-            }
-        }
+        new AlertDialog.Builder(ShowUserContent.this)
+                .setTitle("Altersprüfung")
+                .setMessage("User ist nicht über 18! Ist eine Erlaubnis der Eltern vorhanden?")
+                .setIcon(0)
+                .setPositiveButton("Jup", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int which) {
+                        status = 1;
+                    }
+                })
+                .setNegativeButton("Nope", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int which) {
+                        Toast.makeText(ShowUserContent.this, "Checkin abgebrochen!", Toast.LENGTH_LONG).show();
+                        Intent change = new Intent(getBaseContext(), Scan.class);
+                        startActivity(change);
+                    }
+                })
+                .setIcon(android.R.drawable.ic_dialog_alert)
+                .show();
     }
 
 }
