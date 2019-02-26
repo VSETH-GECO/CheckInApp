@@ -6,17 +6,12 @@ node {
         }
 
         stage('Android Build') {
-            docker.image('thyrlian/android-sdk') {
-				sh 'chmod +x gradlew'
+            docker.image('thyrlian/android-sdk:latest') {
                 sh './gradlew clean build assembleRelease'
             }
 
             
         }
-		
-		stage('Sign APK') {
-			
-		}
 		
 		stage('Archive Artifacts') {
 			archiveArtifacts artifacts: 'GECO CheckIn/build/outputs/apk/*.apk', fingerprint: true
