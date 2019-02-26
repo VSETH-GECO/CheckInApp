@@ -5,12 +5,21 @@ node {
             checkout scm
         }
 
-        stage('Maven Build') {
+        stage('Android Build') {
             docker.image('thyrlian/android-sdk') {
+				sh 'chmod +x gradlew'
                 sh './gradlew clean build assembleRelease'
             }
 
-            archiveArtifacts artifacts: 'GECO CheckIn/build/outputs/apk/*.apk', fingerprint: true
+            
         }
+		
+		stage('Sign APK') {
+			
+		}
+		
+		stage('Archive Artifacts') {
+			archiveArtifacts artifacts: 'GECO CheckIn/build/outputs/apk/*.apk', fingerprint: true
+		}
     }
 }
