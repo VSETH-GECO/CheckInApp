@@ -7,6 +7,7 @@ node {
 
         stage('Android Build') {
             docker.image('thyrlian/android-sdk:latest').inside {
+				sh 'chmod +x gradlew'
                 sh './gradlew clean build assembleRelease'
             }
         }
