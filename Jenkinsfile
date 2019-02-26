@@ -4,14 +4,16 @@ node {
         stage('Clone Repository') {
             checkout scm
         }
+		
+		withCredentials([string(credentialsId: 'keystore-password', variable: 'PASSWORD')]) {
+			def password = $PASSWORD
+		}
 
         stage('Android Build') {
-			withCredentials([string(credentialsId: 'keystore-password', variable: 'PASSWORD')]) {
-				docker.image('thyrlian/android-sdk:latest').inside {
-					sh 'sed -i 's/#KEYPASSWORD#/$PASSWORD/g' "./GECO CheckIn/build.gradlew"'
-					sh 'chmod +x gradlew'
-					sh './gradlew clean build assembleRelease'
-				}
+			docker.image('thyrlian/android-sdk:latest').inside {
+				sh 'sed -i 's/#KEYPASSWORD#/${password}/g' "./GECO CheckIn/build.gradlew"'
+				sh 'chmod +x gradlew'
+				sh './gradlew clean build assembleRelease'
 			}
         }
 		
