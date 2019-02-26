@@ -36,6 +36,24 @@ android {
         exclude 'META-INF/notice.txt'
         exclude 'META-INF/ASL2.0'
     }
+    signingConfigs {
+        release {
+            storeFile file("GECoCheckInKeyStore.jks")
+            storePassword '#KEYPASSWORD#'
+            keyAlias 'key0'
+            keyPassword '#KEYPASSWORD#'
+        }
+    }
+
+    buildTypes {
+        release {
+            signingConfig signingConfigs.release
+        }
+
+        debug {
+            debuggable true
+        }
+    }
 }
 
 dependencies {
