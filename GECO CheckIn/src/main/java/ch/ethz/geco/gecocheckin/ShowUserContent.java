@@ -16,8 +16,6 @@ import android.widget.Toast;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
-import org.apache.http.impl.client.HttpClients;
-
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
@@ -26,11 +24,10 @@ import java.util.GregorianCalendar;
 import ch.ethz.geco.g4j.impl.DefaultGECoClient;
 import ch.ethz.geco.g4j.obj.GECoClient;
 import ch.ethz.geco.g4j.obj.LanUser;
+import reactor.core.publisher.Mono;
 
 public class ShowUserContent extends AppCompatActivity {
 
-    private JsonObject scanres;
-    private GECoClient client;
     private LanUser user;
     private int status;
     private String validateString;
@@ -47,7 +44,11 @@ public class ShowUserContent extends AppCompatActivity {
 
         //checkin button action listener
         final FloatingActionButton checkin_btn = (FloatingActionButton) findViewById(R.id.checkin_btn);
-        checkin_btn.setOnClickListener(new View.OnClickListener() { public void onClick(View v) { checkIn(); } } );
+        checkin_btn.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                checkIn();
+            }
+        });
 
         //init values
         this.status = 0;
@@ -62,18 +63,26 @@ public class ShowUserContent extends AppCompatActivity {
         try {
             //parse qr to json object
             JsonParser parser = new JsonParser();
-            this.scanres = (JsonObject) parser.parse(extra);
-            userId = this.scanres.get("id").getAsInt();
-            this.validateString = this.scanres.get("verification").getAsString();
+            JsonObject scanres = (JsonObject) parser.parse(extra);
+            userId = scanres.get("id").getAsInt();
+            this.validateString = scanres.get("verification").getAsString();
         } catch (Exception e) {
             e.printStackTrace();
         }
 
         //validate Ticket and get Userdata
         String apiKey = PreferenceManager.getDefaultSharedPreferences(this.getBaseContext()).getString("saved_api_key", "error");
-        client = new DefaultGECoClient(apiKey);
-        this.user = client.getLanUserByID((long) userId);
-        showCont(this.user);
+        GECoClient client = new DefaultGECoClient(apiKey);
+
+        Mono<LanUser> monoLanUser = client.getLanUserByID((long) userId);
+        monoLanUser.doOnError(Throwable::printStackTrace).subscribe(lanUser -> {
+            this.user = lanUser;
+            runOnUiThread(() -> {
+                showCont(lanUser);
+                Loading.instance.done();
+            });
+        });
+        new Loading(this).show();
     }
 
     /**
@@ -138,12 +147,20 @@ public class ShowUserContent extends AppCompatActivity {
 
     /**
      * Dialog to confirm SA and get Legi ID
-     * @param aPackage
-     * @param student_association
+     *
+     * @param aPackage Package the user has booked
+     * @param student_association SA the user has choosen
      */
     private void confirmSA(String aPackage, String student_association) {
-        if(aPackage.equals("External")){
-            this.user.setVerification(true, "");
+        if (aPackage.equals("External")) {
+            this.user.setVerification(true, "").subscribe(lanUser -> {
+                this.user = lanUser;
+                runOnUiThread(() -> {
+                    showCont(lanUser);
+                    Loading.instance.done();
+                });
+            });
+            new Loading(this).show();
             return;
         }
 
@@ -179,16 +196,23 @@ public class ShowUserContent extends AppCompatActivity {
 
     /**
      * Get result from user input and process
-     * @param id
+     * @param id legi ID from tge dialog
      */
-    private void getLegiIDFromDialog(String id){
+    private void getLegiIDFromDialog(String id) {
         //Legi Format regexp
         String regex = "[0-9]{2}-[0-9]{3}-[0-9]{3}";
-        if(id.matches(regex)){
-            this.user.setVerification(true, id);
+        if (id.matches(regex)) {
+            this.user.setVerification(true, id).subscribe(lanUser -> {
+                this.user = lanUser;
+                runOnUiThread(() -> {
+                    showCont(lanUser);
+                    Loading.instance.done();
+                });
+            });
+            new Loading(this).show();
         } else {
             Toast.makeText(ShowUserContent.this, "Legi-Nummer ist nicht richtig formatiert. Bitte versuche es erneut!", Toast.LENGTH_LONG).show();
-            if(this.user.getStudentAssoc().isPresent())
+            if (this.user.getStudentAssoc().isPresent())
                 confirmSA(this.user.getLANPackage(), this.user.getStudentAssoc().get());
         }
     }
@@ -199,9 +223,16 @@ public class ShowUserContent extends AppCompatActivity {
     private void checkIn() {
         if (this.status == 1) {
             this.status = 5;
-            user.checkin(this.validateString);
+            this.user.checkin(this.validateString).subscribe(lanUser -> {
+                this.user = lanUser;
+                runOnUiThread(() -> {
+                    showCont(lanUser);
+                    Loading.instance.done();
+                });
+            });
+            new Loading(this).show();
         } else {
-            switch (this.status){
+            switch (this.status) {
                 case 2:
                     Toast.makeText(ShowUserContent.this, "User hat keinen Sitzplatz!", Toast.LENGTH_LONG).show();
                     break;
@@ -229,17 +260,11 @@ public class ShowUserContent extends AppCompatActivity {
                 .setTitle("Altersprüfung")
                 .setMessage("User ist nicht über 18! Ist eine Erlaubnis der Eltern vorhanden?")
                 .setIcon(0)
-                .setPositiveButton("Jup", new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int which) {
-                        status = 1;
-                    }
-                })
-                .setNegativeButton("Nope", new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int which) {
-                        Toast.makeText(ShowUserContent.this, "Checkin abgebrochen!", Toast.LENGTH_LONG).show();
-                        Intent change = new Intent(getBaseContext(), Scan.class);
-                        startActivity(change);
-                    }
+                .setPositiveButton("Jup", (dialog, which) -> status = 1)
+                .setNegativeButton("Nope", (dialog, which) -> {
+                    Toast.makeText(ShowUserContent.this, "Checkin abgebrochen!", Toast.LENGTH_LONG).show();
+                    Intent change = new Intent(getBaseContext(), Scan.class);
+                    startActivity(change);
                 })
                 .setIcon(android.R.drawable.ic_dialog_alert)
                 .show();

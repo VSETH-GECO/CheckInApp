@@ -23,17 +23,15 @@ import ch.ethz.geco.g4j.impl.DefaultGECoClient;
 import ch.ethz.geco.g4j.obj.GECoClient;
 import ch.ethz.geco.g4j.obj.LanUser;
 import ch.ethz.geco.g4j.obj.Seat;
+import reactor.core.publisher.Mono;
 
 public class SearchUser extends AppCompatActivity {
-    private GECoClient client;
     private LanUser user;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_search_user);
-
-        this.client = new DefaultGECoClient(PreferenceManager.getDefaultSharedPreferences(this.getBaseContext()).getString("saved_api_key", "error"));
 
         //Setup Button action listener
         final Button btn_go = (Button) findViewById(R.id.btn_go);
@@ -47,7 +45,7 @@ public class SearchUser extends AppCompatActivity {
             public void onClick(View v) {
                 Intent change = new Intent(getBaseContext(), Scan.class);
                 Bundle b = new Bundle();
-                b.putString("caller", Rent.class.getCanonicalName());
+                b.putString("caller", SearchUser.class.getCanonicalName());
                 change.putExtras(b);
                 startActivity(change);
             }
@@ -63,7 +61,16 @@ public class SearchUser extends AppCompatActivity {
                 //parse qr to json object
                 JsonParser parser = new JsonParser();
                 JsonObject scanres = (JsonObject) parser.parse(extra);
-                this.user = this.client.getLanUserByID(scanres.get("id").getAsLong());
+                GECoClient client = new DefaultGECoClient(PreferenceManager.getDefaultSharedPreferences(this.getBaseContext()).getString("saved_api_key", "error"));
+                Mono<LanUser> monoLanUser = client.getLanUserByID((long) scanres.get("id").getAsInt());
+                monoLanUser.doOnError(Throwable::printStackTrace).subscribe(lanUser -> {
+                    this.user = lanUser;
+                    runOnUiThread(() -> {
+                        showCont();
+                        Loading.instance.done();
+                    });
+                });
+                new Loading(this).show();
                 search();
             } catch (Exception e) {
                 e.printStackTrace();
@@ -77,18 +84,35 @@ public class SearchUser extends AppCompatActivity {
     private void search(){
         EditText userName = (EditText) findViewById(R.id.txt_username);
         EditText seatEditText = (EditText) findViewById(R.id.txt_seat);
+        GECoClient client = new DefaultGECoClient(PreferenceManager.getDefaultSharedPreferences(this.getBaseContext()).getString("saved_api_key", "error"));
         if (userName.getText().toString().length() > 0) {
-            this.user = this.client.getLanUserByName(userName.getText().toString());
+            Mono<LanUser> monoLanUser = client.getLanUserByName(userName.getText().toString());
+            monoLanUser.doOnError(Throwable::printStackTrace).subscribe(lanUser -> {
+                this.user = lanUser;
+                runOnUiThread(() -> {
+                    Loading.instance.done();
+                    showCont();
+                });
+            });
+            new Loading(this).show();
         } else if (seatEditText.getText().toString().length() > 0) {
-            Seat seat = this.client.getSeatByName(seatEditText.getText().toString());
-            if(seat.getLanUserID().isPresent())
-                this.user = this.client.getLanUserByID(seat.getLanUserID().get());
+            Mono<Seat> monoSeat = client.getSeatByName(seatEditText.getText().toString());
+            monoSeat.doOnError(Throwable::printStackTrace).subscribe(seat -> {
+                if(seat.getUserName().isPresent())
+                    client.getLanUserByName(seat.getUserName().get()).subscribe(lanUser -> {
+                        this.user = lanUser;
+                        runOnUiThread(() -> {
+                            Loading.instance.done();
+                            showCont();
+                        });
+                    });
+
+            });
+            new Loading(this).show();
         }
 
         if (this.user != null) {
             showCont();
-        } else {
-            Toast.makeText(this, "Bitte gibt einen Usernamen oder Platz an!", Toast.LENGTH_LONG).show();
         }
     }
 

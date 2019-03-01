@@ -27,11 +27,12 @@ import ch.ethz.geco.g4j.obj.BorrowedItem;
 import ch.ethz.geco.g4j.obj.GECoClient;
 import ch.ethz.geco.g4j.obj.LanUser;
 import ch.ethz.geco.g4j.obj.Seat;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 public class Rent extends AppCompatActivity {
 
     private ArrayAdapter<String> adapter;
-    private GECoClient client;
     private LanUser user;
     private HashMap<Integer, Long> itemid;
 
@@ -39,8 +40,6 @@ public class Rent extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_rent);
-
-        this.client = new DefaultGECoClient(PreferenceManager.getDefaultSharedPreferences(this.getBaseContext()).getString("saved_api_key", "error"));
 
         //Setup Button action listener
         final Button btn_go = (Button) findViewById(R.id.btn_go);
@@ -82,7 +81,6 @@ public class Rent extends AppCompatActivity {
 
             @Override
             public void onItemClick(AdapterView<?> parent, View view, final int position, long id) {
-                final int pos = position;
 
                 new AlertDialog.Builder(Rent.this)
                         .setTitle("Löschen")
@@ -90,8 +88,8 @@ public class Rent extends AppCompatActivity {
                         .setIcon(0)
                         .setPositiveButton("Jup", new DialogInterface.OnClickListener() {
                             public void onClick(DialogInterface dialog, int which) {
-                                delete(pos);
-                                adapter.remove(adapter.getItem(pos));
+                                delete(position);
+                                adapter.remove(adapter.getItem(position));
                             }
                         })
                         .setNegativeButton("Nope", new DialogInterface.OnClickListener() {
@@ -114,7 +112,16 @@ public class Rent extends AppCompatActivity {
                 //parse qr to json object
                 JsonParser parser = new JsonParser();
                 JsonObject scanres = (JsonObject) parser.parse(extra);
-                this.user = this.client.getLanUserByID(scanres.get("id").getAsLong());
+                GECoClient client = new DefaultGECoClient(PreferenceManager.getDefaultSharedPreferences(this.getBaseContext()).getString("saved_api_key", "error"));
+                Mono<LanUser> monoLanUser = client.getLanUserByID((long) scanres.get("id").getAsInt());
+                monoLanUser.doOnError(Throwable::printStackTrace).subscribe(lanUser -> {
+                    this.user = lanUser;
+                    runOnUiThread(() -> {
+                        search();
+                        Loading.instance.done();
+                    });
+                });
+                new Loading(this).show();
                 search();
             } catch (Exception e) {
                 e.printStackTrace();
@@ -128,25 +135,52 @@ public class Rent extends AppCompatActivity {
     private void search() {
         EditText userName = (EditText) findViewById(R.id.txt_username);
         EditText seatEditText = (EditText) findViewById(R.id.txt_seat);
+        GECoClient client = new DefaultGECoClient(PreferenceManager.getDefaultSharedPreferences(this.getBaseContext()).getString("saved_api_key", "error"));
         if (userName.getText().toString().length() > 0) {
-            this.user = this.client.getLanUserByName(userName.getText().toString());
+            Mono<LanUser> monoLanUser = client.getLanUserByName(userName.getText().toString());
+            monoLanUser.doOnError(Throwable::printStackTrace).subscribe(lanUser -> {
+                this.user = lanUser;
+                runOnUiThread(() -> {
+                    Loading.instance.done();
+                    searchItems();
+                });
+            });
+            new Loading(this).show();
         } else if (seatEditText.getText().toString().length() > 0) {
-            Seat seat = this.client.getSeatByName(seatEditText.getText().toString());
-            if(seat.getLanUserID().isPresent())
-                this.user = this.client.getLanUserByID(seat.getLanUserID().get());
+            Mono<Seat> monoSeat = client.getSeatByName(seatEditText.getText().toString());
+            monoSeat.doOnError(Throwable::printStackTrace).subscribe(seat -> {
+                if(seat.getUserName().isPresent())
+                    client.getLanUserByName(seat.getUserName().get()).subscribe(lanUser -> {
+                        this.user = lanUser;
+                        runOnUiThread(() -> {
+                            Loading.instance.done();
+                            searchItems();
+                        });
+                    });
+
+            });
+            new Loading(this).show();
         }
 
         if (this.user != null) {
-            adapter.clear();
-            List<BorrowedItem> borrowedItems = this.user.getBorrowedItems();
-            int i = 0;
-            for(BorrowedItem item : borrowedItems) {
-                adapter.add(item.getName());
-                itemid.put(i, item.getID());
-                i++;
-            }
-        } else {
-            Toast.makeText(Rent.this, "Bitte gibt einen Usernamen oder Platz an!", Toast.LENGTH_LONG).show();
+            searchItems();
+        }
+    }
+
+    private void searchItems() {
+        adapter.clear();
+        Flux<BorrowedItem> fluxItems = this.user.getBorrowedItems();
+        fluxItems.collectList().subscribe(borrowedItems -> {
+            runOnUiThread(() -> {listItems(borrowedItems);});
+        });
+    }
+
+    private void listItems(List<BorrowedItem> borrowedItems) {
+        int i = 0;
+        for(BorrowedItem item : borrowedItems) {
+            adapter.add(item.getName());
+          itemid.put(i, item.getID());
+        i++;
         }
     }
 
@@ -161,7 +195,10 @@ public class Rent extends AppCompatActivity {
         EditText name = (EditText) findViewById(R.id.txt_propName);
         if (name.getText().toString().length() > 0) {
             this.user.borrowItem(name.getText().toString());
-            search();
+            Mono<BorrowedItem> itemMono = this.user.borrowItem(name.getText().toString());
+            itemMono.subscribe(item -> {
+                runOnUiThread(() -> {search();});
+            });
         } else {
             Toast.makeText(Rent.this, "Bitte gibt einen Namen ein!", Toast.LENGTH_LONG).show();
         }

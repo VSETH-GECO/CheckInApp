@@ -9,6 +9,8 @@ import android.support.v7.app.AppCompatActivity;
 
 public class Loading {
 
+    public static Loading instance;
+
     private AppCompatActivity dialogTarget;
     private ProgressDialog dialog;
 
@@ -18,6 +20,7 @@ public class Loading {
      */
     Loading(AppCompatActivity dialogTarget) {
         this.dialogTarget = dialogTarget;
+        Loading.instance = this;
     }
 
     /**
