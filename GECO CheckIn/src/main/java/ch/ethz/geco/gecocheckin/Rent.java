@@ -3,7 +3,9 @@ package ch.ethz.geco.gecocheckin;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.v7.app.AlertDialog;
+import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -18,12 +20,21 @@ import com.google.gson.JsonParser;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
-public class Rent extends NetworkActivity {
+import ch.ethz.geco.g4j.impl.DefaultGECoClient;
+import ch.ethz.geco.g4j.obj.BorrowedItem;
+import ch.ethz.geco.g4j.obj.GECoClient;
+import ch.ethz.geco.g4j.obj.LanUser;
+import ch.ethz.geco.g4j.obj.Seat;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+
+public class Rent extends AppCompatActivity {
 
     private ArrayAdapter<String> adapter;
-    private HashMap<Integer, Integer> itemid;
-    private int userId;
+    private LanUser user;
+    private HashMap<Integer, Long> itemid;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -70,7 +81,6 @@ public class Rent extends NetworkActivity {
 
             @Override
             public void onItemClick(AdapterView<?> parent, View view, final int position, long id) {
-                final int pos = position;
 
                 new AlertDialog.Builder(Rent.this)
                         .setTitle("Löschen")
@@ -78,8 +88,8 @@ public class Rent extends NetworkActivity {
                         .setIcon(0)
                         .setPositiveButton("Jup", new DialogInterface.OnClickListener() {
                             public void onClick(DialogInterface dialog, int which) {
-                                delete(pos);
-                                adapter.remove(adapter.getItem(pos));
+                                delete(position);
+                                adapter.remove(adapter.getItem(position));
                             }
                         })
                         .setNegativeButton("Nope", new DialogInterface.OnClickListener() {
@@ -102,7 +112,16 @@ public class Rent extends NetworkActivity {
                 //parse qr to json object
                 JsonParser parser = new JsonParser();
                 JsonObject scanres = (JsonObject) parser.parse(extra);
-                this.userId = scanres.get("id").getAsInt();
+                GECoClient client = new DefaultGECoClient(PreferenceManager.getDefaultSharedPreferences(this.getBaseContext()).getString("saved_api_key", "error"));
+                Mono<LanUser> monoLanUser = client.getLanUserByID((long) scanres.get("id").getAsInt());
+                monoLanUser.doOnError(Throwable::printStackTrace).subscribe(lanUser -> {
+                    this.user = lanUser;
+                    runOnUiThread(() -> {
+                        search();
+                        Loading.instance.done();
+                    });
+                });
+                new Loading(this).show();
                 search();
             } catch (Exception e) {
                 e.printStackTrace();
@@ -115,15 +134,53 @@ public class Rent extends NetworkActivity {
      */
     private void search() {
         EditText userName = (EditText) findViewById(R.id.txt_username);
-        EditText seat = (EditText) findViewById(R.id.txt_seat);
+        EditText seatEditText = (EditText) findViewById(R.id.txt_seat);
+        GECoClient client = new DefaultGECoClient(PreferenceManager.getDefaultSharedPreferences(this.getBaseContext()).getString("saved_api_key", "error"));
         if (userName.getText().toString().length() > 0) {
-            new Network("/lan/search/user/" + userName.getText().toString(), "GET", "", 5000, this).execute();
-        } else if (seat.getText().toString().length() > 0) {
-            new Network("/lan/search/seat/" + seat.getText().toString(), "GET", "", 5000, this).execute();
-        } else if (userId != 0) {
-            new Network("/lan/user/" + userId + "/items/", "GET", "", 5000, this).execute();
-        } else {
-            Toast.makeText(Rent.this, "Bitte gibt einen Usernamen oder Platz an!", Toast.LENGTH_LONG).show();
+            Mono<LanUser> monoLanUser = client.getLanUserByName(userName.getText().toString());
+            monoLanUser.doOnError(Throwable::printStackTrace).subscribe(lanUser -> {
+                this.user = lanUser;
+                runOnUiThread(() -> {
+                    Loading.instance.done();
+                    searchItems();
+                });
+            });
+            new Loading(this).show();
+        } else if (seatEditText.getText().toString().length() > 0) {
+            Mono<Seat> monoSeat = client.getSeatByName(seatEditText.getText().toString());
+            monoSeat.doOnError(Throwable::printStackTrace).subscribe(seat -> {
+                if(seat.getUserName().isPresent())
+                    client.getLanUserByName(seat.getUserName().get()).subscribe(lanUser -> {
+                        this.user = lanUser;
+                        runOnUiThread(() -> {
+                            Loading.instance.done();
+                            searchItems();
+                        });
+                    });
+
+            });
+            new Loading(this).show();
+        }
+
+        if (this.user != null) {
+            searchItems();
+        }
+    }
+
+    private void searchItems() {
+        adapter.clear();
+        Flux<BorrowedItem> fluxItems = this.user.getBorrowedItems();
+        fluxItems.collectList().subscribe(borrowedItems -> {
+            runOnUiThread(() -> {listItems(borrowedItems);});
+        });
+    }
+
+    private void listItems(List<BorrowedItem> borrowedItems) {
+        int i = 0;
+        for(BorrowedItem item : borrowedItems) {
+            adapter.add(item.getName());
+          itemid.put(i, item.getID());
+        i++;
         }
     }
 
@@ -131,15 +188,17 @@ public class Rent extends NetworkActivity {
      * Save a new Item to database
      */
     private void save() {
-        if (userId == 0) {
+        if (this.user == null) {
             Toast.makeText(Rent.this, "Bitte gibt einen Usernamen oder Platz an!", Toast.LENGTH_LONG).show();
             return;
         }
         EditText name = (EditText) findViewById(R.id.txt_propName);
         if (name.getText().toString().length() > 0) {
-            String cont = "{\"item_name\": \"" + name.getText().toString() + "\"}";
-            new Network("/lan/user/" + userId + "/items", "POST", cont, 5000, this).execute();
-            search();
+            this.user.borrowItem(name.getText().toString());
+            Mono<BorrowedItem> itemMono = this.user.borrowItem(name.getText().toString());
+            itemMono.subscribe(item -> {
+                runOnUiThread(() -> {search();});
+            });
         } else {
             Toast.makeText(Rent.this, "Bitte gibt einen Namen ein!", Toast.LENGTH_LONG).show();
         }
@@ -150,35 +209,10 @@ public class Rent extends NetworkActivity {
      * @param itemPos
      */
     private void delete(int itemPos) {
-        int itemId = itemid.get(itemPos);
-        new Network("/lan/user/" + userId + "/items/" + itemId, "DELETE", "", 5000, this).execute();
+        final long itemId = itemid.get(itemPos);
+        //fixme
+        //new Network("/lan/user/" + userId + "/items/" + itemId, "DELETE", "", 5000, this).execute();
         search();
-    }
-
-    /**
-     * Work with network results
-     * @param res
-     */
-    public void showResult(String res) {
-        if (res.length() == 0) {
-            return;
-        }
-        JsonParser parser = new JsonParser();
-        try {
-            JsonObject jo = (JsonObject) parser.parse(res);
-            if (jo.has("status")) {
-                userId = jo.get("id").getAsInt();
-                new Network("/lan/user/" + userId + "/items/", "GET", "", 5000, this).execute();
-            }
-        } catch (ClassCastException e) {
-            JsonArray items = (JsonArray) parser.parse(res);
-            adapter.clear();
-            for (int i = 0; i < items.size(); i++) {
-                JsonObject it = (JsonObject) items.get(i);
-                adapter.add(it.get("name").getAsString());
-                itemid.put(i, it.get("id").getAsInt());
-            }
-        }
     }
 
 }

@@ -15,12 +15,12 @@ public class MainMenue extends AppCompatActivity {
         setContentView(R.layout.activity_main_menue);
 
         final Button btn_scan = (Button) findViewById(R.id.btn_scan);
-        final Button btn_finduser = (Button) findViewById(R.id.btn_findUser);
+        final Button btn_findUser = (Button) findViewById(R.id.btn_findUser);
         final Button btn_rent = (Button) findViewById(R.id.btn_rent);
         final Button btn_findSeat = (Button) findViewById(R.id.btn_findSeat);
         final Button btn_reset = (Button) findViewById(R.id.btn_reset);
         btn_scan.setOnClickListener(new View.OnClickListener() { public void onClick(View v) { scan(); } } );
-        btn_finduser.setOnClickListener(new View.OnClickListener() { public void onClick(View v) { finduser(); } } );
+        btn_findUser.setOnClickListener(new View.OnClickListener() { public void onClick(View v) { findUser(); } } );
         btn_rent.setOnClickListener(new View.OnClickListener() { public void onClick(View v) { rent(); } } );
         btn_findSeat.setOnClickListener(new View.OnClickListener() { public void onClick(View v) { findSeat(); } } );
         btn_reset.setOnClickListener(new View.OnClickListener() { public void onClick(View v) { reset(); } } );
@@ -40,7 +40,7 @@ public class MainMenue extends AppCompatActivity {
     /**
      * Open FindUser view
      */
-    private void finduser(){
+    private void findUser(){
         Intent change = new Intent(getBaseContext(), SearchUser.class);
         startActivity(change);
     }
@@ -65,8 +65,8 @@ public class MainMenue extends AppCompatActivity {
      * Reset App values
      */
     private void reset(){
-        PreferenceManager.getDefaultSharedPreferences(getBaseContext()).edit().putString("saved_api_key", "default").commit();
-        PreferenceManager.getDefaultSharedPreferences(getBaseContext()).edit().putString("saved_server_ip", "default").commit();
+        PreferenceManager.getDefaultSharedPreferences(getBaseContext()).edit().putString("saved_api_key", "default").apply();
+        PreferenceManager.getDefaultSharedPreferences(getBaseContext()).edit().putString("saved_server_ip", "default").apply();
         Intent change = new Intent(getBaseContext(), Start.class);
         startActivity(change);
         finish();
