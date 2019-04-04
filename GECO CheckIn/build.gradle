@@ -70,7 +70,7 @@ dependencies {
     implementation 'com.google.code.gson:gson:2.8.2'
     implementation 'com.android.support:support-v4:28.0.0'
     implementation 'com.android.support:design:28.0.0'
-    implementation 'com.github.VSETH-GECO:GECo4J:43d92f9451c565da22c5b923cea7ca86400159e4'
+    implementation 'com.github.VSETH-GECO:GECo4J:master-SNAPSHOT'
 
 
 }

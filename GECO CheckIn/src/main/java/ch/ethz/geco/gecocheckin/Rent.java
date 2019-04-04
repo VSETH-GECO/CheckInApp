@@ -210,8 +210,7 @@ public class Rent extends AppCompatActivity {
      */
     private void delete(int itemPos) {
         final long itemId = itemid.get(itemPos);
-        //fixme
-        //new Network("/lan/user/" + userId + "/items/" + itemId, "DELETE", "", 5000, this).execute();
+        this.user.getBorrowedItemByID(itemId).subscribe(borrowedItem -> borrowedItem.remove().subscribe());
         search();
     }
 
