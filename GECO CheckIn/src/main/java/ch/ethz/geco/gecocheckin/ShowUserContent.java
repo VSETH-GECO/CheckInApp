@@ -228,6 +228,16 @@ public class ShowUserContent extends AppCompatActivity {
                 runOnUiThread(() -> {
                     showCont(lanUser);
                     Loading.instance.done();
+                    new AlertDialog.Builder(ShowUserContent.this)
+                            .setTitle("Check In")
+                            .setMessage("Der User wurde erfolgreich eingechecked!")
+                            .setIcon(0)
+                            .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                                public void onClick(DialogInterface dialog, int which) {
+                                }
+                            })
+                            .setIcon(android.R.drawable.ic_dialog_info)
+                            .show();
                 });
             });
             new Loading(this).show();

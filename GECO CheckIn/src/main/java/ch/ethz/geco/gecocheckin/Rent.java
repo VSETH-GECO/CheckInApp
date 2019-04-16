@@ -89,7 +89,6 @@ public class Rent extends AppCompatActivity {
                         .setPositiveButton("Jup", new DialogInterface.OnClickListener() {
                             public void onClick(DialogInterface dialog, int which) {
                                 delete(position);
-                                adapter.remove(adapter.getItem(position));
                             }
                         })
                         .setNegativeButton("Nope", new DialogInterface.OnClickListener() {
@@ -169,6 +168,7 @@ public class Rent extends AppCompatActivity {
 
     private void searchItems() {
         adapter.clear();
+        itemid.clear();
         Flux<BorrowedItem> fluxItems = this.user.getBorrowedItems();
         fluxItems.collectList().subscribe(borrowedItems -> {
             runOnUiThread(() -> {listItems(borrowedItems);});
@@ -179,8 +179,8 @@ public class Rent extends AppCompatActivity {
         int i = 0;
         for(BorrowedItem item : borrowedItems) {
             adapter.add(item.getName());
-          itemid.put(i, item.getID());
-        i++;
+            itemid.put(i, item.getID());
+            i++;
         }
     }
 
@@ -209,6 +209,7 @@ public class Rent extends AppCompatActivity {
      * @param itemPos
      */
     private void delete(int itemPos) {
+        adapter.remove(adapter.getItem(itemPos));
         final long itemId = itemid.get(itemPos);
         this.user.getBorrowedItemByID(itemId).subscribe(borrowedItem -> borrowedItem.remove().subscribe());
         search();
